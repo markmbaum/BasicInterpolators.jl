@@ -431,7 +431,7 @@ end
 
 function (ϕ::ChebyshevInterpolator)(x::Real)::Float64
     #always enforce boundaries
-    #enforcebounds(x, ϕ.xa, ϕ.xb, true)
+    enforcebounds(x, ϕ.xa, ϕ.xb, true)
     #get the target coordinate in theta space
     θ = x2θ(x, ϕ.xa, ϕ.xb)
     #evaluate the cosine expansion in-place
