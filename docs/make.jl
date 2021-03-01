@@ -14,7 +14,12 @@ makedocs(;
         assets=String[],
     ),
     pages=[
-        "Home" => "index.md",
+        "Home"=>"index.md",
+        "Linear Interpolators"=>"linear.md",
+        "Cubic Interpolators"=>"cubic.md",
+        "Cubic Spline Interpolators"=>"spline.md",
+        "Chebyshev Interpolators"=>"chebyshev.md",
+        "General Polynomial Interpolation"=>"polynomial.md"
     ],
 )
 
