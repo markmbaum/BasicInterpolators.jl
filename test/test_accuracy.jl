@@ -19,6 +19,15 @@ function interpolator_error(T::Type, f::Function,
     maximum(abs.(ΦZ .- fZ))
 end
 
+T1 = [LinearInterpolator,
+      CubicInterpolator,
+      CubicSplineInterpolator,
+      ChebyshevInterpolator]
+T2 = [BilinearInterpolator,
+      BicubicInterpolator,
+      BicubicSplineInterpolator,
+      BichebyshevInterpolator]
+
 for T in T1
     @test interpolator_error(T, x->sin(x^2), -3, 3, 128) < 1e-2
 end

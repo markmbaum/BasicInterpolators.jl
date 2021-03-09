@@ -15,11 +15,11 @@ makedocs(;
     ),
     pages=[
         "Home"=>"index.md",
-        "Linear Interpolators"=>"linear.md",
-        "Cubic Interpolators"=>"cubic.md",
-        "Cubic Spline Interpolators"=>"spline.md",
-        "Chebyshev Interpolators"=>"chebyshev.md",
-        "General Polynomial Interpolation"=>"polynomial.md"
+        "One Dimension"=>"1d.md",
+        "Two Dimensions"=>"2d.md",
+        "Scattered, N Dimensions"=>"scattered.md",
+        "Parametric Curve"=>"parametric.md",
+        "Miscellaneous"=>"misc.md"
     ],
 )
 

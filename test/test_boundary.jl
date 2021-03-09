@@ -1,3 +1,12 @@
+T1 = [LinearInterpolator,
+      CubicInterpolator,
+      CubicSplineInterpolator,
+      ChebyshevInterpolator]
+T2 = [BilinearInterpolator,
+      BicubicInterpolator,
+      BicubicSplineInterpolator,
+      BichebyshevInterpolator]
+
 for T in T1
     ϕ = T(x->1, -1, 1, 5)
     @test_throws AssertionError ϕ(-2)
