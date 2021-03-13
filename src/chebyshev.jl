@@ -80,11 +80,27 @@ function fce!(v::AbstractVector{<:Real}, θ::Real, n::Int)
         j = 2*i - 1
         w = v[i]
         while j <= n
-            v[j] = 2*w^2 - 1 #double-angle formula, cos(2θ) = 2cos²(θ) - 1
+            v[j] = 2*w^2 - 1.0 #double-angle formula, cos(2θ) = 2cos²(θ) - 1
             w = v[j]
             j = 2*j - 1
         end
     end
+end
+
+#-------------------------------------------------------------------------------
+# cache for inverted cheby matrices needed for interpolator setup
+
+#a cache for the inverted matrices needed for Bicheby setup
+const invchebmat = Dict{Int64, Array{Float64,2}}()
+
+function invertedchebymatrix(n::Int64)::Array{Float64,2}
+    if haskey(invchebmat, n)
+        A = invchebmat[n]
+    else
+        A = inv(chebymatrix(n))
+        invchebmat[n] = A
+    end
+    return A
 end
 
 #-------------------------------------------------------------------------------
@@ -120,8 +136,10 @@ function ChebyshevInterpolator(x::AbstractVector{<:Real},
     @assert ischebygrid(x) "points must be on a chebyshev grid"
     #number of points/coefficients
     n = length(x)
+    #get the inverted cheby matrix, from cache or fresh
+    A = invertedchebymatrix(n)
     #generate expansion coefficients
-    a = chebymatrix(n)\y
+    a = A*y
     #construct
     ChebyshevInterpolator(n, minimum(x), maximum(x), a, ones(n))
 end
@@ -195,17 +213,17 @@ function BichebyshevInterpolator(x::AbstractVector{<:Real},
     #reject any non-cheby grid spacing
     @assert ischebygrid(x) "axis 1 coordinates must be on a chebyshev grid"
     @assert ischebygrid(y) "axis 2 coordinates must be on a chebyshev grid"
+    #get inverted matrices from cache or generate them
+    B = invertedchebymatrix(nx)
+    A = invertedchebymatrix(ny)
     #generate interpolation coefficients along axis 1 for each value of axis 2
     α = zeros(nx, ny)
-    B = inv(chebymatrix(nx))
     for j = 1:ny
         α[:,j] = B*view(Z,:,j)
     end
-    #generate the matrix needed to get coefficents in the other direction
-    A = inv(chebymatrix(ny))
     #then combine α and A for efficiency
     M = A*α'
-    #other vectors we need
+    #other vectors we need for doing the actual interpolation
     a = ones(ny)
     b = ones(nx)
     c = zeros(ny)

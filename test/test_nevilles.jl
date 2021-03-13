@@ -14,8 +14,8 @@ function neville_error(n::Int, f::Function)
     maximum(abs.(pyy - fyy))
 end
 
-@test neville_error(3, quadratic) < 1e-8
-@test neville_error(4, cubic) < 1e-8
+@test neville_error(3, quadratic) < 1e-6
+@test neville_error(4, cubic) < 1e-6
 for i = 5:6
-    @test neville_error(i, neville) < 1e-5
+    @test neville_error(i, neville) < 1e-4
 end

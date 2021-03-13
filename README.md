@@ -23,10 +23,11 @@ julia> ]add BasicInterpolators
 
 - [x] linear
 - [x] piecewise cubic
-- [x] cubic spline (natural and clamped)
+- [x] cubic spline (natural or clamped)
 - [x] Chebyshev
 - [x] arbitrary order polynomials (Neville's method)
 - [x] polynomial coefficients (efficient Vandermonde solver)
+- [x] cubic Hermite from two points with first derivatives
 
 ##### Two Dimensions, Regular Grid
 
@@ -50,7 +51,7 @@ See the [**documentation**](https://wordsworthgroup.github.io/BasicInterpolators
 
 ### Other packages
 
-More ambitious packages for other/advanced applications include
+If you need other/advanced applications, check out:
 1. [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
 2. [Dierckx.jl](https://github.com/kbarbary/Dierckx.jl)
 3. [GridInterpolations.jl](https://github.com/sisl/GridInterpolations.jl)
