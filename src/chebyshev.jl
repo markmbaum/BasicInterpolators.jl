@@ -72,18 +72,10 @@ function chebymatrix(n::Int)::Array{Float64,2}
     return A
 end
 
-function fce!(v::AbstractVector{<:Real}, θ::Real, n::Int)
-    #only need to evaluate cosine directly at odd multiples of θ (even indices)
-    for i = 2:2:n
-        v[i] = cos((i-1)*θ)
-        #then evaluate the 2ⁿ(i-1)θ terms recursively
-        j = 2*i - 1
-        w = v[i]
-        while j <= n
-            v[j] = 2*w^2 - 1.0 #double-angle formula, cos(2θ) = 2cos²(θ) - 1
-            w = v[j]
-            j = 2*j - 1
-        end
+function Tk!(T::AbstractVector{<:Real}, ξ::Real, n::Int)
+    T[2] = ξ
+    for k = 3:n
+        @inbounds T[k] = 2*ξ*T[k-1] - T[k-2]
     end
 end
 
@@ -161,10 +153,8 @@ end
 function (ϕ::ChebyshevInterpolator)(x::Real)::Float64
     #always enforce boundaries
     enforcebounds(x, ϕ.xa, ϕ.xb, true)
-    #get the target coordinate in theta space
-    θ = x2θ(x, ϕ.xa, ϕ.xb)
     #evaluate the cosine expansion in-place
-    fce!(ϕ.c, θ, ϕ.n)
+    Tk!(ϕ.c, x2ξ(x, ϕ.xa, ϕ.xb), ϕ.n)
     #then apply the coefficients
     ϕ.a'*ϕ.c
 end
@@ -219,9 +209,9 @@ function BichebyshevInterpolator(x::AbstractVector{<:Real},
     #generate interpolation coefficients along axis 1 for each value of axis 2
     α = zeros(nx, ny)
     for j = 1:ny
-        α[:,j] = B*view(Z,:,j)
+        mul!(view(α,:,j), B, view(Z,:,j))
     end
-    #then combine α and A for efficiency
+    #then combine α and A
     M = A*α'
     #other vectors we need for doing the actual interpolation
     a = ones(ny)
@@ -250,12 +240,9 @@ end
 function (Φ::BichebyshevInterpolator)(x::Real, y::Real)::Float64
     #always enforce boundaries
     enforcebounds(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb, true)
-    #get the target point in theta space
-    θy = x2θ(y, Φ.ya, Φ.yb)
-    θx = x2θ(x, Φ.xa, Φ.xb)
-    #evaluate as few cosines directly as possible with no new allocations
-    fce!(Φ.a, θy, Φ.ny)
-    fce!(Φ.b, θx, Φ.nx)
+    #evaluate Chebyshev polys at the coordinates recursively and in-place
+    Tk!(Φ.a, x2ξ(y, Φ.ya, Φ.yb), Φ.ny)
+    Tk!(Φ.b, x2ξ(x, Φ.xa, Φ.xb), Φ.nx)
     #perform M*b, which interpolates along the first axis, also in-place
     mul!(Φ.c, Φ.M, Φ.b)
     #then a'*c interpolates along the second axis

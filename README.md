@@ -27,7 +27,7 @@ julia> ]add BasicInterpolators
 - [x] Chebyshev
 - [x] arbitrary order polynomials (Neville's method)
 - [x] polynomial coefficients (efficient Vandermonde solver)
-- [x] cubic Hermite from two points with first derivatives
+- [x] end-point cubic Hermite
 
 ##### Two Dimensions, Regular Grid
 
