@@ -55,4 +55,4 @@ If you need other/advanced applications, check out:
 1. [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
 2. [Dierckx.jl](https://github.com/kbarbary/Dierckx.jl)
 3. [GridInterpolations.jl](https://github.com/sisl/GridInterpolations.jl)
-4. [ApproXD](https://github.com/floswald/ApproXD.jl)
+4. [ApproXD.jl](https://github.com/floswald/ApproXD.jl)
