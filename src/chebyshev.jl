@@ -1,8 +1,5 @@
 export chebygrid, ChebyshevInterpolator, BichebyshevInterpolator
 
-#for in-place matrix multiplication in chebyshev interpolators
-using LinearAlgebra: mul!
-
 ξ2x(ξ::Real, a::Real, b::Real)::Float64 = (ξ + 1)*((b - a)/2) + a
 
 x2ξ(x::Real, a::Real, b::Real)::Float64 = 2*(x - a)/(b - a) - 1
@@ -86,19 +83,16 @@ end
 const invchebmat = Dict{Int64, Array{Float64,2}}()
 
 function invertedchebymatrix(n::Int64)::Array{Float64,2}
-    if haskey(invchebmat, n)
-        A = invchebmat[n]
-    else
-        A = inv(chebymatrix(n))
-        invchebmat[n] = A
+    if !haskey(invchebmat, n)
+        invchebmat[n] = inv(chebymatrix(n))
     end
-    return A
+    return invchebmat[n]
 end
 
 #-------------------------------------------------------------------------------
 # one-dimensional interpolation
 
-struct ChebyshevInterpolator
+struct ChebyshevInterpolator{N}
     #number of points
     n::Int64
     #lowest value in range
@@ -106,9 +100,11 @@ struct ChebyshevInterpolator
     #highest value in range
     xb::Float64
     #interpolation coefficents
-    a::Vector{Float64}
+    a::NTuple{N,Float64}
     #vector for writing cosine expansion in place
     c::Vector{Float64}
+    #must always have strict boundaries
+    boundaries::StrictBoundaries
 end
 
 """
@@ -131,9 +127,9 @@ function ChebyshevInterpolator(x::AbstractVector{<:Real},
     #get the inverted cheby matrix, from cache or fresh
     A = invertedchebymatrix(n)
     #generate expansion coefficients
-    a = A*y
+    a = Tuple(A*y)
     #construct
-    ChebyshevInterpolator(n, minimum(x), maximum(x), a, ones(n))
+    ChebyshevInterpolator(n, minimum(x), maximum(x), a, ones(n), StrictBoundaries())
 end
 
 """
@@ -152,11 +148,11 @@ end
 
 function (ϕ::ChebyshevInterpolator)(x::Real)::Float64
     #always enforce boundaries
-    enforcebounds(x, ϕ.xa, ϕ.xb, true)
+    ϕ.boundaries(x, ϕ.xa, ϕ.xb)
     #evaluate the cosine expansion in-place
     Tk!(ϕ.c, x2ξ(x, ϕ.xa, ϕ.xb), ϕ.n)
     #then apply the coefficients
-    ϕ.a'*ϕ.c
+    dot(ϕ.a, ϕ.c)
 end
 
 #-------------------------------------------------------------------------------
@@ -180,6 +176,8 @@ struct BichebyshevInterpolator
     a::Vector{Float64} # length ny for cosine expansion in θy
     b::Vector{Float64} # length nx for cosine expansion in θx
     c::Vector{Float64} # length ny for doing M*b in place
+    #must always use strict boundaries
+    boundaries::StrictBoundaries
 end
 
 """
@@ -218,7 +216,7 @@ function BichebyshevInterpolator(x::AbstractVector{<:Real},
     b = ones(nx)
     c = zeros(ny)
     #done
-    BichebyshevInterpolator(nx, ny, xa, xb, ya, yb, M, a, b, c)
+    BichebyshevInterpolator(nx, ny, xa, xb, ya, yb, M, a, b, c, StrictBoundaries())
 end
 
 """
@@ -239,12 +237,12 @@ end
 
 function (Φ::BichebyshevInterpolator)(x::Real, y::Real)::Float64
     #always enforce boundaries
-    enforcebounds(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb, true)
+    Φ.boundaries(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb)
     #evaluate Chebyshev polys at the coordinates recursively and in-place
     Tk!(Φ.a, x2ξ(y, Φ.ya, Φ.yb), Φ.ny)
     Tk!(Φ.b, x2ξ(x, Φ.xa, Φ.xb), Φ.nx)
     #perform M*b, which interpolates along the first axis, also in-place
     mul!(Φ.c, Φ.M, Φ.b)
     #then a'*c interpolates along the second axis
-    Φ.a'*Φ.c
+    dot(Φ.a, Φ.c)
 end

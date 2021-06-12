@@ -28,10 +28,10 @@ T2 = [BilinearInterpolator,
       BicubicSplineInterpolator,
       BichebyshevInterpolator]
 
-for T in T1
+for T ∈ T1
     @test interpolator_error(T, x->sin(x^2), -3, 3, 128) < 1e-2
 end
 
-for T in T2
+for T ∈ T2
     @test interpolator_error(T, (x,y)->sin(x)+cos(y), -3, 3, 128, -3, 3, 128) < 1e-2
 end

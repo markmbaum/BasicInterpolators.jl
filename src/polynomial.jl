@@ -122,31 +122,38 @@ end
 #-------------------------------------------------------------------------------
 # simple piecewise linear interpolator
 
-struct LinearInterpolator
+struct LinearInterpolator{B}
     r::InterpolatorRange
+    boundaries::B
 end
 
 """
-    LinearInterpolator(x, y)
+    LinearInterpolator(x, y, boundaries=StrictBoundaries())
 
 Construct a `LinearInterpolator` for the points defined by coordinates `x` and values `y`
 """
-function LinearInterpolator(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
-    LinearInterpolator(InterpolatorRange(x, y))
+function LinearInterpolator(x::AbstractVector{<:Real},
+                            y::AbstractVector{<:Real},
+                            boundaries::AbstractBoundaries=StrictBoundaries())
+    LinearInterpolator(InterpolatorRange(x, y), boundaries)
 end
 
 """
-    LinearInterpolator(f, xa, xb, n)
+    LinearInterpolator(f, xa, xb, n, boundaries=StrictBoundaries())
 
 Construct a `LinearInterpolator` for the function `f` using `n` evenly spaced function evaluations in the range [`xa`,`xb`]
 """
-function LinearInterpolator(f::Function, xa::Real, xb::Real, n::Int)
-    linstruct(LinearInterpolator, f, xa, xb, n)
+function LinearInterpolator(f::Function,
+                            xa::Real,
+                            xb::Real,
+                            n::Int,
+                            boundaries::AbstractBoundaries=StrictBoundaries())
+    linstruct(LinearInterpolator, f, xa, xb, n, boundaries)
 end
 
-function (ϕ::LinearInterpolator)(x::Real, bounds::Bool=true)::Float64
-    #enforce boundaries if desired
-    enforcebounds(x, ϕ.r.xa, ϕ.r.xb, bounds)
+function (ϕ::LinearInterpolator)(x::Real)::Float64
+    #enforce boundaries
+    ϕ.boundaries(x, ϕ.r.xa, ϕ.r.xb)
     #find the interpolation point
     i = findcell(x, ϕ.r.x)
     #interpolate
@@ -156,32 +163,39 @@ end
 #-------------------------------------------------------------------------------
 # piecewise cubic interpolator without continuous derivatives (not splines)
 
-struct CubicInterpolator
+struct CubicInterpolator{B}
     r::InterpolatorRange
+    boundaries::B
 end
 
 """
-    CubicInterpolator(x, y)
+    CubicInterpolator(x, y, boundaries=StrictBoundaries())
 
 Construct a `CubicInterpolator` for the points defined by coordinates `x` and values `y`
 """
-function CubicInterpolator(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
+function CubicInterpolator(x::AbstractVector{<:Real},
+                           y::AbstractVector{<:Real},
+                           boundaries::AbstractBoundaries=StrictBoundaries())
     @assert length(x) > 3 "can't do cubic interpolation with <4 points"
-    CubicInterpolator(InterpolatorRange(x, y))
+    CubicInterpolator(InterpolatorRange(x, y), boundaries)
 end
 
 """
-    CubicInterpolator(f, xa, xb, n)
+    CubicInterpolator(f, xa, xb, n, boundaries=StrictBoundaries())
 
 Construct a `CubicInterpolator` for the function `f` using `n` evenly spaced function evaluations in the range [`xa`,`xb`]
 """
-function CubicInterpolator(f::Function, xa::Real, xb::Real, n::Int)
-    linstruct(CubicInterpolator, f, xa, xb, n)
+function CubicInterpolator(f::Function,
+                           xa::Real,
+                           xb::Real,
+                           n::Int,
+                           boundaries::AbstractBoundaries=StrictBoundaries())
+    linstruct(CubicInterpolator, f, xa, xb, n, boundaries)
 end
 
-function (ϕ::CubicInterpolator)(x::Real, bounds::Bool=true)::Float64
+function (ϕ::CubicInterpolator)(x::Real)::Float64
     #enforce boundaries if desired
-    enforcebounds(x, ϕ.r.xa, ϕ.r.xb, bounds)
+    ϕ.boundaries(x, ϕ.r.xa, ϕ.r.xb)
     #find the interpolation point
     i = findcell(x, ϕ.r.x)
     #determine which points to neville
@@ -199,37 +213,38 @@ end
 #-------------------------------------------------------------------------------
 # bilinear interpolator
 
-struct BilinearInterpolator
+struct BilinearInterpolator{B}
     G::InterpolatorGrid
+    boundaries::B
 end
 
 """
-    BilinearInterpolator(x, y, Z)
+    BilinearInterpolator(x, y, Z, boundaries=StrictBoundaries())
 
 Construct a `BilinearInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
 function BilinearInterpolator(x::AbstractVector{<:Real},
                               y::AbstractVector{<:Real},
-                              Z::AbstractArray{<:Real,2})
-    BilinearInterpolator(InterpolatorGrid(x, y, Z))
+                              Z::AbstractArray{<:Real,2},
+                              boundaries::AbstractBoundaries=StrictBoundaries())
+    BilinearInterpolator(InterpolatorGrid(x, y, Z), boundaries)
 end
 
 """
-    BilinearInterpolator(f, xa, xb, nx, ya, yb, ny)
+    BilinearInterpolator(f, xa, xb, nx, ya, yb, ny, boundaries=StrictBoundaries())
 
 Construct a `BilinearInterpolator` for the function `f` using a grid of `nx` points evenly spaced on the first axis in [`xa`,`xb`] and `ny` points evenly spaced on the second axis in [`ya`,`yb`].
 """
 function BilinearInterpolator(f::Function,
                               xa::Real, xb::Real, nx::Int,
-                              ya::Real, yb::Real, ny::Int)
-    linstruct(BilinearInterpolator, f, xa, xb, nx, ya, yb, ny)
+                              ya::Real, yb::Real, ny::Int,
+                              boundaries::AbstractBoundaries=StrictBoundaries())
+    linstruct(BilinearInterpolator, f, xa, xb, nx, ya, yb, ny, boundaries)
 end
 
-function (Φ::BilinearInterpolator)(x::Real,
-                                   y::Real,
-                                   bounds::Bool=true)::Float64
+function (Φ::BilinearInterpolator)(x::Real, y::Real)::Float64
     #enforce boundaries if desired
-    enforcebounds(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb, bounds)
+    Φ.boundaries(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb)
     #find the proper grid box to interpolate inside
     i = findcell(x, Φ.G.x)
     j = findcell(y, Φ.G.y)
@@ -245,39 +260,40 @@ end
 #-------------------------------------------------------------------------------
 # bicubic interpolator
 
-struct BicubicInterpolator
+struct BicubicInterpolator{B}
     G::InterpolatorGrid
+    boundaries::B
 end
 
 """
-    BicubicInterpolator(x, y, Z)
+    BicubicInterpolator(x, y, Z, boundaries=StrictBoundaries())
 
 Construct a `BicubicInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
 function BicubicInterpolator(x::AbstractVector{<:Real},
                              y::AbstractVector{<:Real},
-                             Z::AbstractArray{<:Real,2})
+                             Z::AbstractArray{<:Real,2},
+                             boundaries::AbstractBoundaries=StrictBoundaries())
     #insist on at least 4 points in each dimension
     @assert (length(x) > 3) & (length(y) > 3) "bicubic interpolation requires at least 4 points in each dimension"
-    BicubicInterpolator(InterpolatorGrid(x, y, Z))
+    BicubicInterpolator(InterpolatorGrid(x, y, Z), boundaries)
 end
 
 """
-    BicubicInterpolator(f, xa, xb, nx, ya, yb, ny)
+    BicubicInterpolator(f, xa, xb, nx, ya, yb, ny, boundaries=StrictBoundaries())
 
 Construct a `BicubicInterpolator` for the function `f` using a grid of `nx` points evenly spaced on the first axis in [`xa`,`xb`] and `ny` points evenly spaced on the second axis in [`ya`,`yb`].
 """
 function BicubicInterpolator(f::Function,
                              xa::Real, xb::Real, nx::Int,
-                             ya::Real, yb::Real, ny::Int)
-    linstruct(BicubicInterpolator, f, xa, xb, nx, ya, yb, ny)
+                             ya::Real, yb::Real, ny::Int,
+                             boundaries::AbstractBoundaries=StrictBoundaries())
+    linstruct(BicubicInterpolator, f, xa, xb, nx, ya, yb, ny, boundaries)
 end
 
-function (Φ::BicubicInterpolator)(x::Real,
-                                  y::Real,
-                                  bounds::Bool=true)::Float64
+function (Φ::BicubicInterpolator)(x::Real, y::Real)::Float64
     #enforce boundaries if desired
-    enforcebounds(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb, bounds)
+    Φ.boundaries(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb)
     #find the proper grid box to interpolate inside
     i = findcell(x, Φ.G.x)
     j = findcell(y, Φ.G.y)

@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(BasicInterpolators, :DocTestSetup, :(using BasicInterpolator
 
 makedocs(;
     modules=[BasicInterpolators],
-    authors="Mark Baum <markmbaum@protonmail.com> and contributors",
+    authors="Mark Baum <markmbaum@protonmail.com>",
     repo="https://github.com/wordsworthgroup/BasicInterpolators.jl/blob/{commit}{path}#{line}",
     sitename="BasicInterpolators.jl",
     format=Documenter.HTML(;
@@ -18,7 +18,7 @@ makedocs(;
         "One Dimension"=>"1d.md",
         "Two Dimensions"=>"2d.md",
         "Scattered, N Dimensions"=>"scattered.md",
-        "Parametric Curve"=>"parametric.md",
+        "Boundary Behavior"=>"boundaries.md",
         "Miscellaneous"=>"misc.md"
     ],
 )

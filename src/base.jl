@@ -1,4 +1,4 @@
-export findcell
+export findcell, NoBoundaries, WeakBoundaries, StrictBoundaries
 
 """
     findcell(q, V)
@@ -29,18 +29,92 @@ function findcell(q::Real, V::AbstractVector{Float64})::Int64
 end
 
 #-------------------------------------------------------------------------------
-# functions for handling boundaries
+# types for handling boundaries
 
-function enforcebounds(x, xa, xb, enforce::Bool)
-    if enforce
-        @assert xa <= x <= xb "Interpolation location $x out of range [$xa,$xb]"
+function upperbounderror(x, xb, axis::Int)
+    error("Interpolation location $x outside upper interpolation limit $xb on axis $axis")
+end
+
+function lowerbounderror(x, xa, axis::Int)
+    error("Interpolation location $x outside lower interpolation limit $xa on axis $axis")
+end
+
+abstract type AbstractBoundaries end
+
+#--------------------------------
+
+"""
+    NoBoundaries()
+
+Allows interpolators to blindly extrapolate if possible
+"""
+struct NoBoundaries <: AbstractBoundaries end
+
+function (B::NoBoundaries)(x...) end
+
+#--------------------------------
+
+"""
+    WeakBoundaries()
+
+Allows small overshoots at boundaries, but not large ones. Errors are only triggered when the interpolation coordinate is outside of a boundary and not close to it: `(x < boundary) & !(x ≈ boundary)`.
+"""
+struct WeakBoundaries <: AbstractBoundaries end
+
+function (B::WeakBoundaries)(x, xa, xb)
+    if (x < xa) && !(x ≈ xa)
+        lowerbounderror(x, xa, 1)
+    end
+    if (x > xb) && !(x ≈ xb)
+        upperbounderror(x, xb, 1)
     end
 end
 
-function enforcebounds(x, xa, xb, y, ya, yb, enforce::Bool)
-    if enforce
-        @assert xa <= x <= xb "Interpolation location $x out of range [$xa,$xb] on axis 1"
-        @assert ya <= y <= yb "Interpolation location $y out of range [$ya,$yb] on axis 2"
+function (B::WeakBoundaries)(x, xa, xb, y, ya, yb)
+    if (x < xa) && !(x ≈ xa)
+        lowerbounderror(x, xa, 1)
+    end
+    if (x > xb) && !(x ≈ xb)
+        upperbounderror(x, xb, 1)
+    end
+    if (y < ya) && !(y ≈ ya)
+        lowerbounderror(y, ya, 2)
+    end
+    if (y > yb) && !(y ≈ yb)
+        upperbounderror(y, yb, 2)
+    end
+end
+
+#--------------------------------
+
+"""
+    StrictBoundaries()
+
+Triggers errors whenever interpolation coordinates are outside of the boundaries.
+"""
+struct StrictBoundaries <: AbstractBoundaries end
+
+function (B::StrictBoundaries)(x, xa, xb)
+    if (x < xa)
+        lowerbounderror(x, xa, 1)
+    end
+    if (x > xb)
+        upperbounderror(x, xb, 1)
+    end
+end
+
+function (B::StrictBoundaries)(x, xa, xb, y, ya, yb)
+    if (x < xa)
+        lowerbounderror(x, xa, 1)
+    end
+    if (x > xb)
+        upperbounderror(x, xb, 1)
+    end
+    if (y < ya)
+        lowerbounderror(y, ya, 2)
+    end
+    if (y > yb)
+        upperbounderror(y, yb, 2)
     end
 end
 
@@ -80,10 +154,15 @@ function rangecheck(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
     @assert all(diff(x) .> 0.0) "grid points must be in strictly ascending order"
 end
 
-function linstruct(T::Type, f::Function, xa::Real, xb::Real, n::Int)
+function linstruct(T::Type,
+                   f::Function,
+                   xa::Real,
+                   xb::Real,
+                   n::Int,
+                   boundaries::AbstractBoundaries)
     x = collect(LinRange(xa, xb, n))
     y = f.(x)
-    T(x, y)
+    T(x, y, boundaries)
 end
 
 #-------------------------------------------------------------------------------
@@ -135,11 +214,12 @@ end
 
 function linstruct(T::Type, f::Function,
                    xa::Real, xb::Real, nx::Int,
-                   ya::Real, yb::Real, ny::Int)
+                   ya::Real, yb::Real, ny::Int,
+                   boundaries::AbstractBoundaries)
     x = collect(LinRange(xa, xb, nx))
     y = collect(LinRange(ya, yb, ny))
     X = x .* ones(ny)'
     Y = y' .* ones(nx)
     Z = f.(X, Y)
-    T(x, y, Z)
+    T(x, y, Z, boundaries)
 end
