@@ -25,6 +25,6 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/wordsworthgroup/BasicInterpolators.jl",
-    devbranch="main",
-    versions=["v#.#"]
+    #devbranch="main",
+    versions=["stable"=>"v#.#"]
 )
