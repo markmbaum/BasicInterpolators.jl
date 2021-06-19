@@ -3,7 +3,7 @@
 *Quick and easy interpolation methods for basic applications*
 
 | Documentation | Status |
-| ------------- | ------ |
+| :-----------: | :----: |
 | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://wordsworthgroup.github.io/BasicInterpolators.jl/dev)  | [![Build Status](https://github.com/wordsworthgroup/BasicInterpolators.jl/workflows/CI/badge.svg)](https://github.com/wordsworthgroup/BasicInterpolators.jl/actions) [![codecov](https://codecov.io/gh/wordsworthgroup/BasicInterpolators.jl/branch/main/graph/badge.svg?token=yRg33tFcL3)](https://codecov.io/gh/wordsworthgroup/BasicInterpolators.jl)  |
 
 -----
