@@ -4,7 +4,7 @@
 
 | Documentation | Status |
 | :-----------: | :----: |
-| [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://wordsworthgroup.github.io/BasicInterpolators.jl/dev)  | [![Build Status](https://github.com/wordsworthgroup/BasicInterpolators.jl/workflows/CI/badge.svg)](https://github.com/wordsworthgroup/BasicInterpolators.jl/actions) [![codecov](https://codecov.io/gh/wordsworthgroup/BasicInterpolators.jl/branch/main/graph/badge.svg?token=yRg33tFcL3)](https://codecov.io/gh/wordsworthgroup/BasicInterpolators.jl)  |
+| [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://markmbaum.github.io/BasicInterpolators.jl/dev)  | [![Build Status](https://github.com/markmbaum/BasicInterpolators.jl/workflows/CI/badge.svg)](https://github.com/markmbaum/BasicInterpolators.jl/actions) [![codecov](https://codecov.io/gh/markmbaum/BasicInterpolators.jl/branch/main/graph/badge.svg?token=yRg33tFcL3)](https://codecov.io/gh/markmbaum/BasicInterpolators.jl)  |
 
 -----
 
@@ -41,7 +41,7 @@ julia> ]add BasicInterpolators
 - [x] radial basis functions (any choice of function)
 - [x] Shepard
 
-See the [**documentation**](https://wordsworthgroup.github.io/BasicInterpolators.jl/stable) for examples, discussion, and details.
+See the [**documentation**](https://markmbaum.github.io/BasicInterpolators.jl/stable) for examples, discussion, and details.
 
 -----
 
