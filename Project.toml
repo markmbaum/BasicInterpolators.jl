@@ -1,7 +1,7 @@
 name = "BasicInterpolators"
 uuid = "26cce99e-4866-4b6d-ab74-862489e035e0"
 authors = ["Mark Baum <markmbaum@protonmail.com>"]
-version = "0.3"
+version = "0.4"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

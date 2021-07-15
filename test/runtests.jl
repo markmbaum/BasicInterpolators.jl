@@ -1,7 +1,5 @@
 using Test, BasicInterpolators
 
-pushfirst!(LOAD_PATH, "C:/Users/markm/Documents/code")
-
 @testset "Accuracy" begin include("test_accuracy.jl") end
 @testset "Boundary" begin include("test_boundary.jl") end
 @testset "Nevilles" begin include("test_nevilles.jl") end

@@ -92,7 +92,7 @@ end
 #-------------------------------------------------------------------------------
 # one-dimensional interpolation
 
-struct ChebyshevInterpolator{N}
+struct ChebyshevInterpolator{N} <: OneDimensionalInterpolator
     #number of points
     n::Int64
     #lowest value in range
@@ -158,7 +158,7 @@ end
 #-------------------------------------------------------------------------------
 # bichebyshev interpolation, a little trickier now!
 
-struct BichebyshevInterpolator
+struct BichebyshevInterpolator <: TwoDimensionalInterpolator
     #number of points along axis 1
     nx::Int64
     #number of points along axis 2
