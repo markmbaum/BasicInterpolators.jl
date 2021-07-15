@@ -137,7 +137,7 @@ end
 
 Construct a `ChebyshevInterpolator` for the function `f` using `n` function evaluations in the range [`xa`,`xb`]. The function evaluations will occur on the chebyshev nodes.
 """
-function ChebyshevInterpolator(f::Function, xa::Real, xb::Real, n::Int)
+function ChebyshevInterpolator(f::F, xa::Real, xb::Real, n::Int) where {F}
     #set up the range coordinates
     x = chebygrid(xa, xb, n)
     #evaluate the function at those coordinates

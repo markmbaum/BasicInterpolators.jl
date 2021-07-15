@@ -1,5 +1,16 @@
 export findcell, NoBoundaries, WeakBoundaries, StrictBoundaries
 
+#-------------------------------------------------------------------------------
+# abstract classes for interpolators
+
+export OneDimensionalInterpolator, TwoDimensionalInterpolator
+
+abstract type OneDimensionalInterpolator end
+abstract type TwoDimensionalInterpolator end
+
+#-------------------------------------------------------------------------------
+# cell finding stuff
+
 """
     findcell(q, V)
 
@@ -26,6 +37,37 @@ function findcell(q::Real, V::AbstractVector{Float64})::Int64
         end
     end
     return ilo
+end
+
+function findcell(x::Real, ϕ::OneDimensionalInterpolator)::Int64
+    #check previous index used
+    i::Int64 = ϕ.i[]
+    if (x >= ϕ.r.x[i]) & (x <= ϕ.r.x[i+1])
+        return i
+    end
+    #didn't work, find a fresh cell
+    i = findcell(x, ϕ.r.x)
+    #store the index
+    ϕ.i[] = i
+    return i
+end
+
+function findcell(x::Real, y::Real, Φ::OneDimensionalInterpolator)::NTuple{2,Int64}
+    #check previous indices used
+    i::Int64 = Φ.i[]
+    j::Int64 = Φ.j[]
+    if (x >= Φ.G.x[i]) & (x <= Φ.G.x[i+1])
+        if (y >= Φ.G.y[i]) & (y <= Φ.G.y[i+1])
+            return i,j
+        end
+    end
+    #didn't work, find a fresh cell
+    i = findcell(x, Φ.G.x)
+    j = findcell(y, Φ.G.y)
+    #store the indices
+    Φ.i[] = i
+    Φ.j[] = j
+    return i,j
 end
 
 #-------------------------------------------------------------------------------
@@ -135,11 +177,11 @@ struct InterpolatorRange
 end
 
 function InterpolatorRange(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
-    #check for basic problems
-    rangecheck(x, y)
-    #make sure types are uniform and make copies along the way
+    #uniform types
     x = convert.(Float64, x)
     y = convert.(Float64, y)
+    #check for basic problems
+    rangecheck(x, y)
     #grid properties
     n = length(x)
     xa = minimum(x)
@@ -148,7 +190,7 @@ function InterpolatorRange(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
     InterpolatorRange(n, x, xa, xb, y)
 end
 
-function rangecheck(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
+function rangecheck(x::AbstractVector{Float64}, y::AbstractVector{Float64})
     nx, ny = length(x), length(y)
     @assert nx == ny "length of x ($nx) does not match length of y ($ny)"
     @assert all(diff(x) .> 0.0) "grid points must be in strictly ascending order"
@@ -160,7 +202,7 @@ function linstruct(T::Type,
                    xb::Real,
                    n::Int,
                    boundaries::AbstractBoundaries)
-    x = collect(LinRange(xa, xb, n))
+    x = LinRange(xa, xb, n)
     y = f.(x)
     T(x, y, boundaries)
 end
@@ -189,10 +231,10 @@ struct InterpolatorGrid
     Z::Array{Float64,2}
 end
 
-function InterpolatorGrid(x::AbstractVector{<:Real},
-                          y::AbstractVector{<:Real},
-                          Z::AbstractArray{<:Real,2})
-    #make sure types are uniform and make copies along the way
+function InterpolatorGrid(x::AbstractVector{Float64},
+                          y::AbstractVector{Float64},
+                          Z::AbstractArray{Float64,2})
+    #convert/copy
     x = convert.(Float64, x)
     y = convert.(Float64, y)
     Z = convert.(Float64, Z)
@@ -204,9 +246,9 @@ function InterpolatorGrid(x::AbstractVector{<:Real},
     InterpolatorGrid(length(x), length(y), x, y, xa, xb, ya, yb, Z)
 end
 
-function gridcheck(x::AbstractVector{<:Real},
-                   y::AbstractVector{<:Real},
-                   Z::AbstractArray{<:Real,2})
+function gridcheck(x::AbstractVector{Float64},
+                   y::AbstractVector{Float64},
+                   Z::AbstractArray{Float64,2})
     @assert (length(x) > 1) & (length(y) > 1) "grid must have more than one point in each direction"
     @assert size(Z) == (length(x), length(y)) "dimensions mismatched, size(Z) = $(size(Z)) but length(x) = $(length(x)) and length(y) = $(length(y))"
     @assert (all(diff(x) .> 0.0) & all(diff(y) .>= 0.0)) "grid coordinates must be monotonically increasing without duplicates"
@@ -216,8 +258,8 @@ function linstruct(T::Type, f::Function,
                    xa::Real, xb::Real, nx::Int,
                    ya::Real, yb::Real, ny::Int,
                    boundaries::AbstractBoundaries)
-    x = collect(LinRange(xa, xb, nx))
-    y = collect(LinRange(ya, yb, ny))
+    x = LinRange(xa, xb, nx)
+    y = LinRange(ya, yb, ny)
     X = x .* ones(ny)'
     Y = y' .* ones(nx)
     Z = f.(X, Y)

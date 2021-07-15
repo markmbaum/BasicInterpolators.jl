@@ -1,14 +1,13 @@
-export CubicSplineInterpolator,
-       ParametricCurveInterpolator,
-       BicubicSplineInterpolator
+export CubicSplineInterpolator, BicubicSplineInterpolator
 
 #-------------------------------------------------------------------------------
 # piecewise cubics with continuous derivatives (splines!)
 
-struct CubicSplineInterpolator{B}
+struct CubicSplineInterpolator{B} <: OneDimensionalInterpolator
     r::InterpolatorRange
     coef::Vector{NTuple{4,Float64}}
     boundaries::B
+    i::RefValue{Int64} #previous cell index
 end
 
 """
@@ -16,8 +15,8 @@ end
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a natural spline, where the second derivative is set to zero at the boundaries.
 """
-function CubicSplineInterpolator(x::AbstractVector{<:Real},
-                                 y::AbstractVector{<:Real},
+function CubicSplineInterpolator(x::AbstractVector{Float64},
+                                 y::AbstractVector{Float64},
                                  boundaries::AbstractBoundaries=StrictBoundaries())
     #construct the underlying range, triggering some checks
     r = InterpolatorRange(x, y)
@@ -55,7 +54,7 @@ function CubicSplineInterpolator(x::AbstractVector{<:Real},
         coef[i] = (a[i], b[i], c[i], d[i])
     end
     #construct the object
-    CubicSplineInterpolator(r, coef, boundaries)
+    CubicSplineInterpolator(r, coef, boundaries, Ref(1))
 end
 
 """
@@ -63,8 +62,8 @@ end
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a clamped spline, where the first derivatives at the boundaries are set by `dy₁` and `dyₙ`.
 """
-function CubicSplineInterpolator(x::AbstractVector{<:Real},
-                                 y::AbstractVector{<:Real},
+function CubicSplineInterpolator(x::AbstractVector{Float64},
+                                 y::AbstractVector{Float64},
                                  dy₁::Real,
                                  dyₙ::Real,
                                  boundaries::AbstractBoundaries=StrictBoundaries())
@@ -111,7 +110,7 @@ function CubicSplineInterpolator(x::AbstractVector{<:Real},
         coef[i] = (a[i], b[i], c[i], d[i])
     end
     #construct the object
-    CubicSplineInterpolator(r, coef, boundaries)
+    CubicSplineInterpolator(r, coef, boundaries, Ref(1))
 end
 
 """
@@ -141,10 +140,12 @@ end
 #-------------------------------------------------------------------------------
 # cubic splines on a regular grid
 
-struct BicubicSplineInterpolator{B}
+struct BicubicSplineInterpolator{B} <: TwoDimensionalInterpolator
     G::InterpolatorGrid
     coef::Array{NTuple{16,Float64},2}
     boundaries::B
+    i::RefValue{Int64} #previous cell index
+    j::RefValue{Int64} #previous cell index
 end
 
 """
@@ -152,9 +153,9 @@ end
 
 Construct a `BicubicSplineInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
-function BicubicSplineInterpolator(x::AbstractVector{<:Real},
-                                   y::AbstractVector{<:Real},
-                                   Z::AbstractArray{<:Real,2},
+function BicubicSplineInterpolator(x::AbstractVector{Float64},
+                                   y::AbstractVector{Float64},
+                                   Z::AbstractArray{Float64,2},
                                    boundaries::AbstractBoundaries=StrictBoundaries())
     nx, ny = size(Z)
     #insist on at least 4 points in each dimension
@@ -234,7 +235,7 @@ function BicubicSplineInterpolator(x::AbstractVector{<:Real},
             coef[i,j] = Tuple(vec(α[i,j]))
         end
     end
-    BicubicSplineInterpolator(InterpolatorGrid(x, y, Z), coef, boundaries)
+    BicubicSplineInterpolator(InterpolatorGrid(x, y, Z), coef, boundaries, Ref(1), Ref(1))
 end
 
 """
