@@ -252,7 +252,7 @@ function (Φ::BilinearInterpolator)(x::Real, y::Real)::Float64
     #enforce boundaries if desired
     Φ.boundaries(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb)
     #find the proper grid box to interpolate inside
-    i, j = findcell(x, Φ)
+    i, j = findcell(x, y, Φ)
     #name stuff for clarity
     xg, yg, Z = Φ.G.x, Φ.G.y, Φ.G.Z
     #interpolate along axis 1 first
@@ -302,7 +302,7 @@ function (Φ::BicubicInterpolator)(x::Real, y::Real)::Float64
     #enforce boundaries if desired
     Φ.boundaries(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb)
     #find the proper grid box to interpolate inside
-    i, j = findcell(x, Φ)
+    i, j = findcell(x, y, Φ)
     #get indices of points along axis 1 to use for interpolation
     if i == 1
         I = 1:4

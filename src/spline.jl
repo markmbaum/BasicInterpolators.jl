@@ -130,7 +130,7 @@ function (ϕ::CubicSplineInterpolator)(x::Real)::Float64
     #enforce boundaries if desired
     ϕ.boundaries(x, ϕ.r.xa, ϕ.r.xb)
     #find the interpolation point
-    i = findcell(x, ϕ.r.x)
+    i = findcell(x, ϕ)
     #offset from the nearest lower point
     ξ = x - ϕ.r.x[i]
     #evaluate polynomial
@@ -254,8 +254,7 @@ function (Φ::BicubicSplineInterpolator)(x::Real, y::Real)::Float64
     #enforce boundaries if desired
     Φ.boundaries(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb)
     #find the proper grid box to interpolate inside
-    i = findcell(x, Φ.G.x)
-    j = findcell(y, Φ.G.y)
+    i = findcell(x, y, Φ)
     #get the coefficients
     α = Φ.coef[i,j]
     #offsets
