@@ -254,7 +254,7 @@ function (Φ::BicubicSplineInterpolator)(x::Real, y::Real)::Float64
     #enforce boundaries if desired
     Φ.boundaries(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb)
     #find the proper grid box to interpolate inside
-    i = findcell(x, y, Φ)
+    i, j = findcell(x, y, Φ)
     #get the coefficients
     α = Φ.coef[i,j]
     #offsets

@@ -16,7 +16,7 @@ abstract type TwoDimensionalInterpolator end
 
 Use bisection search to find the cell containing `q`, assuming `V` is a sorted vector of coordinates. The returned integer is the index of the element in `V` immediately less than `q`. For example, if findcell returns 2, then `q ∈ [V[2],V[3])`. If `q` is less than every element in `V`, 1 is returned, indicating the first cell in `V`. If `q` is greater than every element in `V`, `length(V)-1` is returned, indicating the last cell in `V`.
 """
-function findcell(q::Real, V::AbstractVector{Float64})::Int64
+function findcell(q::Real, V::Vector{Float64})::Int64
     n = length(V)
     #handle boundaries
     if q <= V[1]
@@ -52,12 +52,12 @@ function findcell(x::Real, ϕ::OneDimensionalInterpolator)::Int64
     return i
 end
 
-function findcell(x::Real, y::Real, Φ::OneDimensionalInterpolator)::NTuple{2,Int64}
+function findcell(x::Real, y::Real, Φ::TwoDimensionalInterpolator)::NTuple{2,Int64}
     #check previous indices used
     i::Int64 = Φ.i[]
     j::Int64 = Φ.j[]
     if (x >= Φ.G.x[i]) & (x <= Φ.G.x[i+1])
-        if (y >= Φ.G.y[i]) & (y <= Φ.G.y[i+1])
+        if (y >= Φ.G.y[j]) & (y <= Φ.G.y[j+1])
             return i,j
         end
     end
@@ -67,7 +67,7 @@ function findcell(x::Real, y::Real, Φ::OneDimensionalInterpolator)::NTuple{2,In
     #store the indices
     Φ.i[] = i
     Φ.j[] = j
-    return i,j
+    return i, j
 end
 
 #-------------------------------------------------------------------------------
@@ -203,7 +203,7 @@ function linstruct(T::Type,
                    n::Int,
                    boundaries::AbstractBoundaries)
     x = LinRange(xa, xb, n)
-    y = f.(x)
+    y = convert.(Float64, f.(x))
     T(x, y, boundaries)
 end
 
@@ -262,6 +262,6 @@ function linstruct(T::Type, f::Function,
     y = LinRange(ya, yb, ny)
     X = x .* ones(ny)'
     Y = y' .* ones(nx)
-    Z = f.(X, Y)
+    Z = convert.(Float64, f.(X, Y))
     T(x, y, Z, boundaries)
 end
