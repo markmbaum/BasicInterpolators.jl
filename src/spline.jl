@@ -132,9 +132,9 @@ function (ϕ::CubicSplineInterpolator)(x::Real)::Float64
     #find the interpolation point
     i = findcell(x, ϕ)
     #offset from the nearest lower point
-    ξ = x - ϕ.r.x[i]
+    @inbounds ξ = x - ϕ.r.x[i]
     #evaluate polynomial
-    ϕ.coef[i][1] + ϕ.coef[i][2]*ξ + ϕ.coef[i][3]*ξ^2 + ϕ.coef[i][4]*ξ^3
+    @inbounds ϕ.coef[i][1] + ϕ.coef[i][2]*ξ + ϕ.coef[i][3]*ξ^2 + ϕ.coef[i][4]*ξ^3
 end
 
 #-------------------------------------------------------------------------------
