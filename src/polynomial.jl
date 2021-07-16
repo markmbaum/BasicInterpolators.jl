@@ -153,13 +153,12 @@ function LinearInterpolator(f::Function,
 end
 
 function (ϕ::LinearInterpolator)(x::Real)::Float64
-    x = convert(Float64, x)
     #enforce boundaries
     ϕ.boundaries(x, ϕ.r.xa, ϕ.r.xb)
     #find the interpolation cell
     i = findcell(x, ϕ)
     #interpolate
-    (x - ϕ.r.x[i])*(ϕ.r.y[i+1] - ϕ.r.y[i])/(ϕ.r.x[i+1] - ϕ.r.x[i]) + ϕ.r.y[i]
+    @inbounds (x - ϕ.r.x[i])*(ϕ.r.y[i+1] - ϕ.r.y[i])/(ϕ.r.x[i+1] - ϕ.r.x[i]) + ϕ.r.y[i]
 end
 
 #-------------------------------------------------------------------------------

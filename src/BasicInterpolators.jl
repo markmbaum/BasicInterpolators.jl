@@ -11,4 +11,6 @@ include("spline.jl")
 include("chebyshev.jl")
 include("scattered.jl")
 
+println("TESTING PACKAGE")
+
 end

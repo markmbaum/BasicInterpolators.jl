@@ -1,3 +1,5 @@
+pushfirst!(LOAD_PATH, "C:/Users/markm/Documents/code")
+
 using Test, BasicInterpolators
 
 @testset "Accuracy" begin include("test_accuracy.jl") end

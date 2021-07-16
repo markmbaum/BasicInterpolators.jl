@@ -12,25 +12,20 @@ abstract type TwoDimensionalInterpolator end
 # cell finding stuff
 
 """
-    findcell(q, V)
+    findcell(q, V, n)
 
-Use bisection search to find the cell containing `q`, assuming `V` is a sorted vector of coordinates. The returned integer is the index of the element in `V` immediately less than `q`. For example, if findcell returns 2, then `q ∈ [V[2],V[3])`. If `q` is less than every element in `V`, 1 is returned, indicating the first cell in `V`. If `q` is greater than every element in `V`, `length(V)-1` is returned, indicating the last cell in `V`.
+Use bisection search to find the cell containing `q`, assuming `V` is a sorted vector of `n` coordinates. The returned integer is the index of the element in `V` immediately less than `q`. For example, if `findcell` returns 2, then `q ∈ [V[2],V[3])`. If `q` is less than every element in `V`, 1 is returned, indicating the first cell in `V`. If `q` is greater than every element in `V`, `length(V)-1` is returned, indicating the last cell in `V`.
 """
-function findcell(q::Real, V::Vector{Float64})::Int64
-    n = length(V)
+function findcell(q::Real, V::Vector{Float64}, n::Int64)::Int64
     #handle boundaries
-    if q <= V[1]
-        return 1
-    end
-    if q >= V[n]
-        return n - 1 #last cell starts with second to last point
-    end
+    @inbounds (q <= V[1]) && return(1)
+    @inbounds (q >= V[n]) && return(n - 1)
     #bisection search for the containing cell
     ilo = 0
     ihi = n
     while ihi - ilo > 1
         imid = (ihi + ilo) ÷ 2
-        if V[imid] > q
+        @inbounds if V[imid] > q
             ihi = imid
         else
             ilo = imid
@@ -42,11 +37,9 @@ end
 function findcell(x::Real, ϕ::OneDimensionalInterpolator)::Int64
     #check previous index used
     i::Int64 = ϕ.i[]
-    if (x >= ϕ.r.x[i]) & (x <= ϕ.r.x[i+1])
-        return i
-    end
+    @inbounds (x >= ϕ.r.x[i]) && (x <= ϕ.r.x[i+1]) && return(i)
     #didn't work, find a fresh cell
-    i = findcell(x, ϕ.r.x)
+    i = findcell(x, ϕ.r.x, ϕ.r.n)
     #store the index
     ϕ.i[] = i
     return i
@@ -56,14 +49,14 @@ function findcell(x::Real, y::Real, Φ::TwoDimensionalInterpolator)::NTuple{2,In
     #check previous indices used
     i::Int64 = Φ.i[]
     j::Int64 = Φ.j[]
-    if (x >= Φ.G.x[i]) & (x <= Φ.G.x[i+1])
-        if (y >= Φ.G.y[j]) & (y <= Φ.G.y[j+1])
+    @inbounds if (x >= Φ.G.x[i]) && (x <= Φ.G.x[i+1])
+        @inbounds if (y >= Φ.G.y[j]) & (y <= Φ.G.y[j+1])
             return i,j
         end
     end
     #didn't work, find a fresh cell
-    i = findcell(x, Φ.G.x)
-    j = findcell(y, Φ.G.y)
+    i = findcell(x, Φ.G.x, Φ.G.nx)
+    j = findcell(y, Φ.G.y, Φ.G.ny)
     #store the indices
     Φ.i[] = i
     Φ.j[] = j
@@ -73,12 +66,12 @@ end
 #-------------------------------------------------------------------------------
 # types for handling boundaries
 
-function upperbounderror(x, xb, axis::Int)
-    error("Interpolation location $x outside upper interpolation limit $xb on axis $axis")
+function upperbounderror(x, xb, axis::String)
+    error("Interpolation location $x outside upper interpolation limit $xb on the $axis axis")
 end
 
-function lowerbounderror(x, xa, axis::Int)
-    error("Interpolation location $x outside lower interpolation limit $xa on axis $axis")
+function lowerbounderror(x, xa, axis::String)
+    error("Interpolation location $x outside lower interpolation limit $xa on the $axis axis")
 end
 
 abstract type AbstractBoundaries end
@@ -104,27 +97,15 @@ Allows small overshoots at boundaries, but not large ones. Errors are only trigg
 struct WeakBoundaries <: AbstractBoundaries end
 
 function (B::WeakBoundaries)(x, xa, xb)
-    if (x < xa) && !(x ≈ xa)
-        lowerbounderror(x, xa, 1)
-    end
-    if (x > xb) && !(x ≈ xb)
-        upperbounderror(x, xb, 1)
-    end
+    ((x < xa) && !(x ≈ xa)) && lowerbounderror(x, xa, "first")
+    ((x > xb) && !(x ≈ xb)) && upperbounderror(x, xb, "first")
 end
 
 function (B::WeakBoundaries)(x, xa, xb, y, ya, yb)
-    if (x < xa) && !(x ≈ xa)
-        lowerbounderror(x, xa, 1)
-    end
-    if (x > xb) && !(x ≈ xb)
-        upperbounderror(x, xb, 1)
-    end
-    if (y < ya) && !(y ≈ ya)
-        lowerbounderror(y, ya, 2)
-    end
-    if (y > yb) && !(y ≈ yb)
-        upperbounderror(y, yb, 2)
-    end
+    ((x < xa) && !(x ≈ xa)) && lowerbounderror(x, xa, "first")
+    ((x > xb) && !(x ≈ xb)) && upperbounderror(x, xb, "first")
+    ((y < ya) && !(y ≈ ya)) && lowerbounderror(y, ya, "second")
+    ((y > yb) && !(y ≈ yb)) && upperbounderror(y, yb, "second")
 end
 
 #--------------------------------
@@ -137,27 +118,15 @@ Triggers errors whenever interpolation coordinates are outside of the boundaries
 struct StrictBoundaries <: AbstractBoundaries end
 
 function (B::StrictBoundaries)(x, xa, xb)
-    if (x < xa)
-        lowerbounderror(x, xa, 1)
-    end
-    if (x > xb)
-        upperbounderror(x, xb, 1)
-    end
+    (x < xa) && lowerbounderror(x, xa, "first")
+    (x > xb) && upperbounderror(x, xb, "first")
 end
 
 function (B::StrictBoundaries)(x, xa, xb, y, ya, yb)
-    if (x < xa)
-        lowerbounderror(x, xa, 1)
-    end
-    if (x > xb)
-        upperbounderror(x, xb, 1)
-    end
-    if (y < ya)
-        lowerbounderror(y, ya, 2)
-    end
-    if (y > yb)
-        upperbounderror(y, yb, 2)
-    end
+    (x < xa) && lowerbounderror(x, xa, "first")
+    (x > xb) && upperbounderror(x, xb, "first")
+    (y < ya) && lowerbounderror(y, ya, "second")
+    (y > yb) && upperbounderror(y, yb, "second")
 end
 
 #-------------------------------------------------------------------------------
