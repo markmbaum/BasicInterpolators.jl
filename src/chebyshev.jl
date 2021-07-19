@@ -1,10 +1,10 @@
 export chebygrid, ChebyshevInterpolator, BichebyshevInterpolator
 
-ξ2x(ξ::Real, a::Real, b::Real)::Float64 = (ξ + 1)*((b - a)/2) + a
+ξ2x(ξ::Real, a::Real, b::Real) = (ξ + 1)*((b - a)/2) + a
 
-x2ξ(x::Real, a::Real, b::Real)::Float64 = 2*(x - a)/(b - a) - 1
+x2ξ(x::Real, a::Real, b::Real) = 2*(x - a)/(b - a) - 1
 
-x2θ(x::Real, a::Real, b::Real)::Float64 = acos(x2ξ(x, a, b))
+x2θ(x::Real, a::Real, b::Real) = acos(x2ξ(x, a, b))
 
 """
     chebygrid(n)
@@ -172,7 +172,7 @@ struct BichebyshevInterpolator <: TwoDimensionalInterpolator
     #highest value on axis 2
     yb::Float64
     #matrix and vectors for doing the interpolation
-    M::Array{Float64,2} # size ny x nx
+    M::Matrix{Float64} # size ny x nx
     a::Vector{Float64} # length ny for cosine expansion in θy
     b::Vector{Float64} # length nx for cosine expansion in θx
     c::Vector{Float64} # length ny for doing M*b in place

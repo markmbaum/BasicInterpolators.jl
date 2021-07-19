@@ -3,8 +3,8 @@ export CubicSplineInterpolator, BicubicSplineInterpolator
 #-------------------------------------------------------------------------------
 # piecewise cubics with continuous derivatives (splines!)
 
-struct CubicSplineInterpolator{B} <: OneDimensionalInterpolator
-    r::InterpolatorRange
+struct CubicSplineInterpolator{T,B} <: OneDimensionalInterpolator
+    r::InterpolatorRange{T}
     coef::Vector{NTuple{4,Float64}}
     boundaries::B
     i::RefValue{Int64} #previous cell index
@@ -15,15 +15,15 @@ end
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a natural spline, where the second derivative is set to zero at the boundaries.
 """
-function CubicSplineInterpolator(x::AbstractVector{Float64},
-                                 y::AbstractVector{Float64},
+function CubicSplineInterpolator(x::AbstractVector,
+                                 y::AbstractVector,
                                  boundaries::AbstractBoundaries=StrictBoundaries())
     #construct the underlying range, triggering some checks
     r = InterpolatorRange(x, y)
     n = r.n
     #compute coefficients
     #Burden, Richard L., and J. Douglas Faires. Numerical Analysis. 2011.
-    a = collect(Float64, r.y)
+    a = collect(r.y)
     b = zeros(n - 1)
     d = zeros(n - 1)
     h = diff(r.x)
@@ -62,17 +62,17 @@ end
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a clamped spline, where the first derivatives at the boundaries are set by `dy₁` and `dyₙ`.
 """
-function CubicSplineInterpolator(x::AbstractVector{Float64},
-                                 y::AbstractVector{Float64},
-                                 dy₁::Real,
-                                 dyₙ::Real,
+function CubicSplineInterpolator(x::AbstractVector,
+                                 y::AbstractVector,
+                                 dy₁,
+                                 dyₙ,
                                  boundaries::AbstractBoundaries=StrictBoundaries())
     #construct the underlying range, triggering some checks
     r = InterpolatorRange(x, y)
     n = r.n
     #compute coefficients
     #Burden, Richard L., and J. Douglas Faires. Numerical Analysis. 2011.
-    a = collect(Float64, r.y)
+    a = collect(r.y)
     b = zeros(n - 1)
     d = zeros(n - 1)
     h = diff(r.x)
@@ -126,7 +126,7 @@ function CubicSplineInterpolator(f::Function,
     linstruct(CubicSplineInterpolator, f, xa, xb, n, boundaries)
 end
 
-function (ϕ::CubicSplineInterpolator)(x::Real)::Float64
+function (ϕ::CubicSplineInterpolator)(x)
     #enforce boundaries if desired
     ϕ.boundaries(x, ϕ.r.xa, ϕ.r.xb)
     #find the interpolation point
@@ -140,8 +140,8 @@ end
 #-------------------------------------------------------------------------------
 # cubic splines on a regular grid
 
-struct BicubicSplineInterpolator{B} <: TwoDimensionalInterpolator
-    G::InterpolatorGrid
+struct BicubicSplineInterpolator{T,B} <: TwoDimensionalInterpolator
+    G::InterpolatorGrid{T}
     coef::Array{NTuple{16,Float64},2}
     boundaries::B
     i::RefValue{Int64} #previous cell index
@@ -153,9 +153,9 @@ end
 
 Construct a `BicubicSplineInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
-function BicubicSplineInterpolator(x::AbstractVector{Float64},
-                                   y::AbstractVector{Float64},
-                                   Z::AbstractArray{Float64,2},
+function BicubicSplineInterpolator(x::AbstractVector,
+                                   y::AbstractVector,
+                                   Z::AbstractMatrix,
                                    boundaries::AbstractBoundaries=StrictBoundaries())
     nx, ny = size(Z)
     #insist on at least 4 points in each dimension
@@ -250,7 +250,7 @@ function BicubicSplineInterpolator(f::Function,
     linstruct(BicubicSplineInterpolator, f, xa, xb, nx, ya, yb, ny, boundaries)
 end
 
-function (Φ::BicubicSplineInterpolator)(x::Real, y::Real)::Float64
+function (Φ::BicubicSplineInterpolator)(x, y)
     #enforce boundaries if desired
     Φ.boundaries(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb)
     #find the proper grid box to interpolate inside

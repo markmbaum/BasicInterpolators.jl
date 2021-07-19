@@ -9,8 +9,8 @@ function distance(a::AbstractVector{Float64},
                   b::AbstractVector{Float64},
                   n::Int64)::Float64
     r = 0.0
-    @inbounds for i = 1:n
-        r += (a[i] - b[i])*(a[i] - b[i])
+    for i = 1:n
+        @inbounds r += (a[i] - b[i])*(a[i] - b[i])
     end
     sqrt(r)
 end

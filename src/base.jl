@@ -1,4 +1,4 @@
-export findcell, NoBoundaries, WeakBoundaries, StrictBoundaries
+export findcell, NoBoundaries, WeakBoundaries, StrictBoundaries, values
 
 #-------------------------------------------------------------------------------
 # abstract classes for interpolators
@@ -16,7 +16,7 @@ abstract type TwoDimensionalInterpolator end
 
 Use bisection search to find the cell containing `q`, assuming `V` is a sorted vector of `n` coordinates. The returned integer is the index of the element in `V` immediately less than `q`. For example, if `findcell` returns 2, then `q ∈ [V[2],V[3])`. If `q` is less than every element in `V`, 1 is returned, indicating the first cell in `V`. If `q` is greater than every element in `V`, `length(V)-1` is returned, indicating the last cell in `V`.
 """
-function findcell(q::Real, V::Vector{Float64}, n::Int64)::Int64
+function findcell(q::Real, V::AbstractVector, n::Int64)::Int64
     #handle boundaries
     @inbounds (q <= V[1]) && return(1)
     @inbounds (q >= V[n]) && return(n - 1)
@@ -132,23 +132,22 @@ end
 #-------------------------------------------------------------------------------
 # a base structure for 1d interpolations and some related functions
 
-struct InterpolatorRange
+struct InterpolatorRange{T}
     #number of points
     n::Int64
     #grid/sample points
-    x::Vector{Float64}
+    x::Vector{T}
     #lowest sample value
-    xa::Float64
+    xa::T
     #highest sample value
-    xb::Float64
+    xb::T
     #values at sample points
-    y::Vector{Float64}
+    y::Vector{T}
 end
 
-function InterpolatorRange(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
-    #uniform types
-    x = convert.(Float64, x)
-    y = convert.(Float64, y)
+function InterpolatorRange(x::AbstractVector, y::AbstractVector)
+    #promote types
+    x, y = promote(collect(x), collect(y))
     #check for basic problems
     rangecheck(x, y)
     #grid properties
@@ -159,7 +158,7 @@ function InterpolatorRange(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
     InterpolatorRange(n, x, xa, xb, y)
 end
 
-function rangecheck(x::AbstractVector{Float64}, y::AbstractVector{Float64})
+function rangecheck(x::AbstractVector, y::AbstractVector)
     nx, ny = length(x), length(y)
     @assert nx == ny "length of x ($nx) does not match length of y ($ny)"
     @assert all(diff(x) .> 0.0) "grid points must be in strictly ascending order"
@@ -172,52 +171,50 @@ function linstruct(T::Type,
                    n::Int,
                    boundaries::AbstractBoundaries)
     x = LinRange(xa, xb, n)
-    y = convert.(Float64, f.(x))
+    y = f.(x)
     T(x, y, boundaries)
 end
+
+values(ϕ::OneDimensionalInterpolator) = ϕ.r.y
 
 #-------------------------------------------------------------------------------
 # a base structure for 2d grid interpolation and some related functions
 
-struct InterpolatorGrid
+struct InterpolatorGrid{T}
     #number of points along axis 1
     nx::Int64
     #number of points along axis 2
     ny::Int64
     #grid points along axis 1
-    x::Vector{Float64}
+    x::Vector{T}
     #grid points along axis 2
-    y::Vector{Float64}
+    y::Vector{T}
     #lowest value on axis 1
-    xa::Float64
+    xa::T
     #highest value on axis 1
-    xb::Float64
+    xb::T
     #lowest value on axis 2
-    ya::Float64
+    ya::T
     #highest value on axis 2
-    yb::Float64
+    yb::T
     #values at grid points
-    Z::Array{Float64,2}
+    Z::Array{T,2}
 end
 
-function InterpolatorGrid(x::AbstractVector{Float64},
-                          y::AbstractVector{Float64},
-                          Z::AbstractArray{Float64,2})
-    #convert/copy
-    x = convert.(Float64, x)
-    y = convert.(Float64, y)
-    Z = convert.(Float64, Z)
+function InterpolatorGrid(x::AbstractVector, y::AbstractVector, Z::AbstractMatrix)
+    #promote types
+    x, y = promote(collect(x), collect(y))
+    Z = collect(typeof(x[1]), Z)
     #check for basic grid problems
     gridcheck(x, y, Z)
     #boundaries
-    xa, xb, ya, yb = minimum(x), maximum(x), minimum(y), maximum(y)
+    xa, xb = minimum(x), maximum(x)
+    ya, yb = minimum(y), maximum(y)
     #construct the object
     InterpolatorGrid(length(x), length(y), x, y, xa, xb, ya, yb, Z)
 end
 
-function gridcheck(x::AbstractVector{Float64},
-                   y::AbstractVector{Float64},
-                   Z::AbstractArray{Float64,2})
+function gridcheck(x::AbstractVector, y::AbstractVector, Z::AbstractMatrix)
     @assert (length(x) > 1) & (length(y) > 1) "grid must have more than one point in each direction"
     @assert size(Z) == (length(x), length(y)) "dimensions mismatched, size(Z) = $(size(Z)) but length(x) = $(length(x)) and length(y) = $(length(y))"
     @assert (all(diff(x) .> 0.0) & all(diff(y) .>= 0.0)) "grid coordinates must be monotonically increasing without duplicates"
@@ -231,6 +228,8 @@ function linstruct(T::Type, f::Function,
     y = LinRange(ya, yb, ny)
     X = x .* ones(ny)'
     Y = y' .* ones(nx)
-    Z = convert.(Float64, f.(X, Y))
+    Z = f.(X, Y)
     T(x, y, Z, boundaries)
 end
+
+values(ϕ::TwoDimensionalInterpolator) = ϕ.G.Z
