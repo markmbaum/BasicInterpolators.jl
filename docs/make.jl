@@ -6,11 +6,11 @@ DocMeta.setdocmeta!(BasicInterpolators, :DocTestSetup, :(using BasicInterpolator
 makedocs(;
     modules=[BasicInterpolators],
     authors="Mark Baum <markmbaum@protonmail.com>",
-    repo="https://github.com/wordsworthgroup/BasicInterpolators.jl/blob/{commit}{path}#{line}",
+    repo="https://github.com/markmbaum/BasicInterpolators.jl/blob/{commit}{path}#{line}",
     sitename="BasicInterpolators.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://wordsworthgroup.github.io/BasicInterpolators.jl",
+        canonical="https://markmbaum.github.io/BasicInterpolators.jl",
         assets=String[],
     ),
     pages=[
@@ -24,7 +24,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/wordsworthgroup/BasicInterpolators.jl",
+    repo="github.com/markmbaum/BasicInterpolators.jl",
     devbranch="main",
     versions=["stable"=>"v#.#"]
 )
