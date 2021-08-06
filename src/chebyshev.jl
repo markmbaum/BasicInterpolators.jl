@@ -61,19 +61,26 @@ function chebymatrix(n::Int)::Array{Float64,2}
     @assert n > 1 "can't construct cheby matrix smaller than 2 x 2"
     A = zeros(n,n)
     ξ = chebygrid(n)
-    for j = 1:n
-        for k = 1:n
-            A[j,k] = cheby(ξ[j], k-1)
-        end
+    for j ∈ 1:n, k ∈ 1:n
+        A[j,k] = cheby(ξ[j], k-1)
     end
     return A
 end
 
-function Tk!(T::AbstractVector{<:Real}, ξ::Real, n::Int)
-    T[2] = ξ
+function Tₖ!(T::Vector{Float64}, ξ::Float64, n::Int64)::Nothing
+    Tₖ₋₂::Float64 = 1.0 
+    Tₖ₋₁::Float64 = ξ
+    @inbounds T[2] = Tₖ₋₁
     for k = 3:n
-        @inbounds T[k] = 2*ξ*T[k-1] - T[k-2]
+        #compute next value
+        Tₖ::Float64 = 2*ξ*Tₖ₋₁ - Tₖ₋₂
+        #set array value
+        @inbounds T[k] = Tₖ
+        #swaps
+        Tₖ₋₂ = Tₖ₋₁
+        Tₖ₋₁ = Tₖ
     end
+    nothing
 end
 
 #-------------------------------------------------------------------------------
@@ -150,7 +157,7 @@ function (ϕ::ChebyshevInterpolator)(x::Real)::Float64
     #always enforce boundaries
     ϕ.boundaries(x, ϕ.xa, ϕ.xb)
     #evaluate the cosine expansion in-place
-    Tk!(ϕ.c, x2ξ(x, ϕ.xa, ϕ.xb), ϕ.n)
+    Tₖ!(ϕ.c, x2ξ(x, ϕ.xa, ϕ.xb), ϕ.n)
     #then apply the coefficients
     dot(ϕ.a, ϕ.c)
 end
@@ -239,10 +246,11 @@ function (Φ::BichebyshevInterpolator)(x::Real, y::Real)::Float64
     #always enforce boundaries
     Φ.boundaries(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb)
     #evaluate Chebyshev polys at the coordinates recursively and in-place
-    Tk!(Φ.a, x2ξ(y, Φ.ya, Φ.yb), Φ.ny)
-    Tk!(Φ.b, x2ξ(x, Φ.xa, Φ.xb), Φ.nx)
+    Tₖ!(Φ.a, x2ξ(y, Φ.ya, Φ.yb), Φ.ny)
+    Tₖ!(Φ.b, x2ξ(x, Φ.xa, Φ.xb), Φ.nx)
     #perform M*b, which interpolates along the first axis, also in-place
     mul!(Φ.c, Φ.M, Φ.b)
     #then a'*c interpolates along the second axis
     dot(Φ.a, Φ.c)
 end
+ 

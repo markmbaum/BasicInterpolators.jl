@@ -3,51 +3,55 @@ export quadratic, cubic, neville, vandermonde, vandermonde!, cubichermite,
        BilinearInterpolator, BicubicInterpolator
 
 """
-    quadratic(x, xp, yp)
+    quadratic(x, xₚ, yₚ)
 
-Perform quadratic polynomial interpolation of the points defined by coordinates `xp` and values `yp`, at the coordinate `x`, using Neville's algorithm. `xp` and `yp` must both contain three points.
+Perform quadratic polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm. `xₚ` and `yₚ` must both contain three points.
 """
-function quadratic(x, xp::AbstractVector, yp::AbstractVector)
-    @assert length(xp) == length(yp) == 3 "need 3 points for quadratic interpolation"
+function quadratic(x, xₚ, yₚ)
+    @assert length(xₚ) == length(yₚ) == 3 "need 3 points for quadratic interpolation"
+    #short names
+    @inbounds x₁, x₂, x₃ = xₚ[1], xₚ[2], xₚ[3]
+    @inbounds y₁, y₂, y₃ = yₚ[1], yₚ[2], yₚ[3]
     #first stage
-    p12 = ((x - xp[2])*yp[1] + (xp[1] - x)*yp[2])/(xp[1] - xp[2])
-    p23 = ((x - xp[3])*yp[2] + (xp[2] - x)*yp[3])/(xp[2] - xp[3])
+    p₁₂ = ((x - x₂)*y₁ + (x₁ - x)*y₂)/(x₁ - x₂)
+    p₂₃ = ((x - x₃)*y₂ + (x₂ - x)*y₃)/(x₂ - x₃)
     #final stage
-    ((x - xp[3])*p12 + (xp[1] - x)*p23)/(xp[1] - xp[3])
+    ((x - x₃)*p₁₂ + (x₁ - x)*p₂₃)/(x₁ - x₃)
 end
 
 """
-    cubic(x, xp, yp)
+    cubic(x, xₚ, yₚ)
 
-Perform cubic polynomial interpolation of the points defined by coordinates `xp` and values `yp`, at the coordinate `x`, using Neville's algorithm. `xp` and `yp` must both contain four points.
-"""
-function cubic(x, xp::AbstractVector, yp::AbstractVector)
-    @assert length(xp) == length(yp) == 4 "need 4 points for cubic interpolation"
+Perform cubic polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm. `xₚ` and `yₚ` must both contain four points.
+""" 
+function cubic(x, xₚ, yₚ)
+    @assert length(xₚ) == length(yₚ) == 4 "need 4 points for cubic interpolation"
+    #short names
+    @inbounds x₁, x₂, x₃, x₄ = xₚ[1], xₚ[2], xₚ[3], xₚ[4]
+    @inbounds y₁, y₂, y₃, y₄ = yₚ[1], yₚ[2], yₚ[3], yₚ[4]
     #first stage
-    p12 = ((x - xp[2])*yp[1] + (xp[1] - x)*yp[2])/(xp[1] - xp[2])
-    p23 = ((x - xp[3])*yp[2] + (xp[2] - x)*yp[3])/(xp[2] - xp[3])
-    p34 = ((x - xp[4])*yp[3] + (xp[3] - x)*yp[4])/(xp[3] - xp[4])
+    p₁₂ = ((x - x₂)*y₁ + (x₁ - x)*y₂)/(x₁ - x₂)
+    p₂₃ = ((x - x₃)*y₂ + (x₂ - x)*y₃)/(x₂ - x₃)
+    p₃₄ = ((x - x₄)*y₃ + (x₃ - x)*y₄)/(x₃ - x₄)
     #second stage
-    p123 = ((x - xp[3])*p12 + (xp[1] - x)*p23)/(xp[1] - xp[3])
-    p234 = ((x - xp[4])*p23 + (xp[2] - x)*p34)/(xp[2] - xp[4])
+    p₁₂₃ = ((x - x₃)*p₁₂ + (x₁ - x)*p₂₃)/(x₁ - x₃)
+    p₂₃₄ = ((x - x₄)*p₂₃ + (x₂ - x)*p₃₄)/(x₂ - x₄)
     #final stage
-    ((x - xp[4])*p123 + (xp[1] - x)*p234)/(xp[1] - xp[4])
+    ((x - x₄)*p₁₂₃ + (x₁ - x)*p₂₃₄)/(x₁ - x₄)
 end
 
 """
-    neville(x, xp, yp)
+    neville(x, xₚ, yₚ)
 
-Perform polynomial interpolation of the points defined by coordinates `xp` and values `yp`, at the coordinate `x`, using Neville's algorithm with as many points as are provided. `xp` and `yp` must have the same length. With only 3 or 4 points the [`quadratic`](@ref) and [`cubic`](@ref) functions will be faster.
+Perform polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm with as many points as are provided. `xₚ` and `yₚ` must have the same length. With only 3 or 4 points the [`quadratic`](@ref) and [`cubic`](@ref) functions will be faster.
 """
-function neville(x, xp::AbstractVector, yp::AbstractVector)
-    @assert length(xp) == length(yp) "can't Neville with vectors of different lengths"
-    n = length(xp)
+function neville(x, xₚ, yₚ)
+    @assert length(xₚ) == length(yₚ) "can't Neville with vectors of different lengths"
+    n = length(xₚ)
     P = zeros(n, n)
-    P[:,1] = yp
-    for i = 2:n
-        for j = i:n
-            P[j,i] = ((x - xp[j-i+1])*P[j,i-1] - (x - xp[j])*P[j-1,i-1])/(xp[j] - xp[j-i+1])
-        end
+    P[:,1] = yₚ
+    for i ∈ 2:n, j ∈ i:n
+        P[j,i] = ((x - xₚ[j-i+1])*P[j,i-1] - (x - xₚ[j])*P[j-1,i-1])/(xₚ[j] - xₚ[j-i+1])
     end
     return P[n,n]
 end
@@ -61,14 +65,14 @@ Generate the coefficients of an arbitrary order polynomial passing through the p
 
     Solving for the the coefficients of a high-order polynomial is a notoriously ill-conditioned problem. It is not recommended for orders greater than 5 or 6, although it depends on the application. If you must interpolate with a high-order polynomial, it's better to use the [`neville`](@ref) function instead of computing coefficients.
 """
-function vandermonde(x::AbstractVector, y::AbstractVector)
+function vandermonde(x, y)
     @assert length(x) == length(y) "length of x must equal length of y"
     c = zeros(length(x))
     vandermonde!(c, x, y)
     return c
 end
 
-function vandermonde!(c::AbstractVector, x::AbstractVector, y::AbstractVector)
+function vandermonde!(c, x, y)
     @assert length(c) == length(x) == length(y) "vandermonde! requires length(c) == length(x) == length(y)"
     n = length(x)
     s = zeros(n)
@@ -95,16 +99,16 @@ function vandermonde!(c::AbstractVector, x::AbstractVector, y::AbstractVector)
 end
 
 """
-    cubichermite(x, xa, xb, ya, yb, dya, dyb)
+    cubichermite(x, x₁, x₂, y₁, y₂, dy₁, dy₂)
 
 Interpolate a cubic polynomial between two points, given its values and first derivatives at the points.
 """
-function cubichermite(x, xa, xb, ya, yb, dya, dyb)
-    Δx = (xb - xa)
-    ξ = (x - xa)/Δx
-    u = Δx*dya
-    v = Δx*dyb
-    ξ^3*(2*ya + u - 2*yb + v) + ξ^2*(-3*ya - 2*u + 3*yb - v) + ξ*u + ya
+function cubichermite(x, x₁, x₂, y₁, y₂, dy₁, dy₂)
+    Δx = (x₂ - x₁)
+    ξ = (x - x₁)/Δx
+    u = Δx*dy₁
+    v = Δx*dy₂
+    ξ^3*(2*y₁ + u - 2*y₂ + v) + ξ^2*(-3*y₁ - 2*u + 3*y₂ - v) + ξ*u + y₁
 end
 
 #-------------------------------------------------------------------------------
@@ -145,8 +149,11 @@ function (ϕ::LinearInterpolator)(x)
     ϕ.boundaries(x, ϕ.r.xa, ϕ.r.xb)
     #find the interpolation cell
     i = findcell(x, ϕ)
+    #short names
+    @inbounds x₁, x₂ = ϕ.r.x[i], ϕ.r.x[i+1]
+    @inbounds y₁, y₂ = ϕ.r.y[i], ϕ.r.y[i+1]
     #interpolate
-    @inbounds (x - ϕ.r.x[i])*(ϕ.r.y[i+1] - ϕ.r.y[i])/(ϕ.r.x[i+1] - ϕ.r.x[i]) + ϕ.r.y[i]
+    (x - x₁)*(y₂ - y₁)/(x₂ - x₁) + y₁
 end
 
 #-------------------------------------------------------------------------------
@@ -183,7 +190,7 @@ function CubicInterpolator(f::Function,
     linstruct(CubicInterpolator, f, xa, xb, n, boundaries)
 end
 
-function (ϕ::CubicInterpolator)(x)::Float64
+function (ϕ::CubicInterpolator)(x)
     #enforce boundaries if desired
     ϕ.boundaries(x, ϕ.r.xa, ϕ.r.xb)
     #find the interpolation point
@@ -197,7 +204,7 @@ function (ϕ::CubicInterpolator)(x)::Float64
         I = i-1:i+2
     end
     #interpolate
-    cubic(x, view(ϕ.r.x,I), view(ϕ.r.y,I))
+    @inbounds cubic(x, view(ϕ.r.x,I), view(ϕ.r.y,I))
 end
 
 #-------------------------------------------------------------------------------
@@ -239,13 +246,19 @@ function (Φ::BilinearInterpolator)(x, y)
     Φ.boundaries(x, Φ.G.xa, Φ.G.xb, y, Φ.G.ya, Φ.G.yb)
     #find the proper grid box to interpolate inside
     i, j = findcell(x, y, Φ)
-    #name stuff for clarity
-    xg, yg, Z = Φ.G.x, Φ.G.y, Φ.G.Z
+    #clear names
+    @inbounds x₁, x₂ = Φ.G.x[i], Φ.G.x[i+1]
+    @inbounds y₁, y₂ = Φ.G.y[j], Φ.G.y[j+1]
+    @inbounds Z₁₁, Z₂₁ = Φ.G.Z[i,j],     Φ.G.Z[i+1,j]
+    @inbounds Z₂₂, Z₁₂ = Φ.G.Z[i+1,j+1], Φ.G.Z[i,j+1]
+    #reused differences
+    xx₁ = x - x₁
+    x₂x₁ = x₂ - x₁
     #interpolate along axis 1 first
-    t = (x - xg[i])*(Z[i+1,j]   - Z[i,j]  )/(xg[i+1] - xg[i]) + Z[i,j]
-    u = (x - xg[i])*(Z[i+1,j+1] - Z[i,j+1])/(xg[i+1] - xg[i]) + Z[i,j+1]
+    t = xx₁*(Z₂₁ - Z₁₁)/x₂x₁ + Z₁₁
+    u = xx₁*(Z₂₂ - Z₁₂)/x₂x₁ + Z₁₂
     #then finish by interpolating between the interpolated values along axis 2
-    (y - yg[j])*(u - t)/(yg[j+1] - yg[j]) + t
+    (y - y₁)*(u - t)/(y₂ - y₁) + t
 end
 
 #-------------------------------------------------------------------------------
@@ -305,8 +318,16 @@ function (Φ::BicubicInterpolator)(x, y)
     else
         J = j-1:j+2
     end
+    #view the proper chunks of the arrays
+    xᵣ = view(Φ.G.x, I)
+    yᵣ = view(Φ.G.y, J)
     #perform initial 4 interpolations
-    zx = [neville(x, view(Φ.G.x, I), view(Φ.G.Z, I, J[k])) for k=1:4]
+    zₓ = (
+        cubic(x, xᵣ, @view Φ.G.Z[I,J[1]]),
+        cubic(x, xᵣ, @view Φ.G.Z[I,J[2]]),
+        cubic(x, xᵣ, @view Φ.G.Z[I,J[3]]),
+        cubic(x, xᵣ, @view Φ.G.Z[I,J[4]])
+    )
     #final interpolation
-    neville(y, view(Φ.G.y,J), zx)
+    cubic(y, yᵣ, zₓ)
 end
