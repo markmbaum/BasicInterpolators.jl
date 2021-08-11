@@ -1,5 +1,3 @@
-# Interpolation of Scattered Points in N Dimensions
-
 `BasicInterpolators` implements two types for interpolating scattered points in any number of dimensions.
 1. [radial basis function (RBF) interpolation](https://en.wikipedia.org/wiki/Radial_basis_function_interpolation) using *any* radial basis function in the form ``ϕ(r,ϵ)``, where ``r`` is the distance between points and ``ϵ`` is a scaling factor that can be used in any way. Several common functions are provided, but using your own function will not slow down the interpolator unless the function itself is slow. Constructing an RBF interpolator for ``p`` points requires the solution of a symmetric ``p × p`` matrix equation, which will require a noticeable amount of time and memory with a lot of points. Three common radial basis functions are available for convenience:
     * [`invmultiquadratic`](@ref) (default)

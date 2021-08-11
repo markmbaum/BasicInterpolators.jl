@@ -1,5 +1,3 @@
-# Chebyshev Interpolation
-
 Chebyshev interpolation is an extremely accurate method for interpolating smooth functions. It's a good way to replace a very slow/costly function with a high accuracy approximation (if the function is smooth!). The extremely high accuracy is achieved by careful placement of the interpolation nodes at the [Chebyshev nodes](https://en.wikipedia.org/wiki/Chebyshev_nodes). This part of `BasicInterpolators` that is not really so basic, but chebyshev interpolation is a powerful tool in the right context and it's worth providing easy access to it.
 
 To easily create a [`ChebyshevInterpolator`](@ref) or [`BichebyshevInterpolator`](@ref) without dealing with the specific grid spacing they require, pass a function to the constructor. The function will be evaluated at the appropriate locations to generate an interpolating approximation. For example, for two-dimensional interpolation of $f(x,y) = \sin(x) + \cos(y)$ with $x,y ∈ [-3,3]$

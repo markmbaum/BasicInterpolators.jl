@@ -43,7 +43,7 @@ end
 """
     neville(x, xₚ, yₚ)
 
-Perform polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm with as many points as are provided. `xₚ` and `yₚ` must have the same length. With only 3 or 4 points the [`quadratic`](@ref) and [`cubic`](@ref) functions will be faster.
+Perform polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm with as many points as are provided. `xₚ` and `yₚ` must have the same length. With only 3 or 4 points the [`quadratic`](@ref) and [`cubic`](@ref) functions will be considerably faster.
 """
 function neville(x, xₚ, yₚ)
     @assert length(xₚ) == length(yₚ) "can't Neville with vectors of different lengths"
@@ -51,7 +51,7 @@ function neville(x, xₚ, yₚ)
     P = zeros(n, n)
     P[:,1] = yₚ
     for i ∈ 2:n, j ∈ i:n
-        P[j,i] = ((x - xₚ[j-i+1])*P[j,i-1] - (x - xₚ[j])*P[j-1,i-1])/(xₚ[j] - xₚ[j-i+1])
+        @inbounds P[j,i] = ((x - xₚ[j-i+1])*P[j,i-1] - (x - xₚ[j])*P[j-1,i-1])/(xₚ[j] - xₚ[j-i+1])
     end
     return P[n,n]
 end
@@ -125,9 +125,7 @@ end
 
 Construct a `LinearInterpolator` for the points defined by coordinates `x` and values `y`
 """
-function LinearInterpolator(x::AbstractVector,
-                            y::AbstractVector,
-                            boundaries::AbstractBoundaries=StrictBoundaries())
+function LinearInterpolator(x, y, boundaries::AbstractBoundaries=StrictBoundaries())
     LinearInterpolator(InterpolatorRange(x, y), boundaries, Ref(1))
 end
 
@@ -136,11 +134,7 @@ end
 
 Construct a `LinearInterpolator` for the function `f` using `n` evenly spaced function evaluations in the range [`xa`,`xb`]
 """
-function LinearInterpolator(f::Function,
-                            xa::Real,
-                            xb::Real,
-                            n::Int,
-                            boundaries::AbstractBoundaries=StrictBoundaries())
+function LinearInterpolator(f, xa, xb, n::Int, boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(LinearInterpolator, f, xa, xb, n, boundaries)
 end
 
@@ -170,10 +164,8 @@ end
 
 Construct a `CubicInterpolator` for the points defined by coordinates `x` and values `y`
 """
-function CubicInterpolator(x::AbstractVector,
-                           y::AbstractVector,
-                           boundaries::AbstractBoundaries=StrictBoundaries())
-    @assert length(x) > 3 "can't do cubic interpolation with <4 points"
+function CubicInterpolator(x, y, boundaries::AbstractBoundaries=StrictBoundaries())
+    @assert length(x) > 3 "can't do cubic interpolation with < 4 points"
     CubicInterpolator(InterpolatorRange(x, y), boundaries, Ref(1))
 end
 
@@ -182,11 +174,7 @@ end
 
 Construct a `CubicInterpolator` for the function `f` using `n` evenly spaced function evaluations in the range [`xa`,`xb`]
 """
-function CubicInterpolator(f::Function,
-                           xa::Real,
-                           xb::Real,
-                           n::Int,
-                           boundaries::AbstractBoundaries=StrictBoundaries())
+function CubicInterpolator(f, xa, xb, n::Int, boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(CubicInterpolator, f, xa, xb, n, boundaries)
 end
 
@@ -222,10 +210,7 @@ end
 
 Construct a `BilinearInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
-function BilinearInterpolator(x::AbstractVector,
-                              y::AbstractVector,
-                              Z::AbstractMatrix,
-                              boundaries::AbstractBoundaries=StrictBoundaries())
+function BilinearInterpolator(x, y, Z, boundaries::AbstractBoundaries=StrictBoundaries())
     BilinearInterpolator(InterpolatorGrid(x, y, Z), boundaries, Ref(1), Ref(1))
 end
 
@@ -234,9 +219,9 @@ end
 
 Construct a `BilinearInterpolator` for the function `f` using a grid of `nx` points evenly spaced on the first axis in [`xa`,`xb`] and `ny` points evenly spaced on the second axis in [`ya`,`yb`].
 """
-function BilinearInterpolator(f::Function,
-                              xa::Real, xb::Real, nx::Int,
-                              ya::Real, yb::Real, ny::Int,
+function BilinearInterpolator(f,
+                              xa, xb, nx::Int,
+                              ya, yb, ny::Int,
                               boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(BilinearInterpolator, f, xa, xb, nx, ya, yb, ny, boundaries)
 end
@@ -276,10 +261,7 @@ end
 
 Construct a `BicubicInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
-function BicubicInterpolator(x::AbstractVector,
-                             y::AbstractVector,
-                             Z::AbstractMatrix,
-                             boundaries::AbstractBoundaries=StrictBoundaries())
+function BicubicInterpolator(x, y, Z, boundaries::AbstractBoundaries=StrictBoundaries())
     #insist on at least 4 points in each dimension
     @assert (length(x) > 3) & (length(y) > 3) "bicubic interpolation requires at least 4 points in each dimension"
     BicubicInterpolator(InterpolatorGrid(x, y, Z), boundaries, Ref(1), Ref(1))
@@ -290,9 +272,9 @@ end
 
 Construct a `BicubicInterpolator` for the function `f` using a grid of `nx` points evenly spaced on the first axis in [`xa`,`xb`] and `ny` points evenly spaced on the second axis in [`ya`,`yb`].
 """
-function BicubicInterpolator(f::Function,
-                             xa::Real, xb::Real, nx::Int,
-                             ya::Real, yb::Real, ny::Int,
+function BicubicInterpolator(f,
+                             xa, xb, nx::Int,
+                             ya, yb, ny::Int,
                              boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(BicubicInterpolator, f, xa, xb, nx, ya, yb, ny, boundaries)
 end

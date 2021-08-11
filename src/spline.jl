@@ -5,36 +5,40 @@ export CubicSplineInterpolator, BicubicSplineInterpolator
 
 struct CubicSplineInterpolator{T,B} <: OneDimensionalInterpolator
     r::InterpolatorRange{T}
-    coef::Vector{NTuple{4,Float64}}
+    coef::Vector{NTuple{4,T}}
     boundaries::B
     i::RefValue{Int64} #previous cell index
 end
+
+#-------------------------------------------------------------------------------
+# constructors
 
 """
     CubicSplineInterpolator(x, y, boundaries=StrictBoundaries())
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a natural spline, where the second derivative is set to zero at the boundaries.
 """
-function CubicSplineInterpolator(x::AbstractVector,
-                                 y::AbstractVector,
-                                 boundaries::AbstractBoundaries=StrictBoundaries())
+function CubicSplineInterpolator(x::AbstractVector{T},
+                                 y::AbstractVector{T},
+                                 boundaries::AbstractBoundaries=StrictBoundaries()
+                                 ) where {T}
     #construct the underlying range, triggering some checks
     r = InterpolatorRange(x, y)
     n = r.n
     #compute coefficients
     #Burden, Richard L., and J. Douglas Faires. Numerical Analysis. 2011.
-    a = collect(r.y)
-    b = zeros(n - 1)
-    d = zeros(n - 1)
+    a = collect(T, r.y)
+    b = zeros(T, n - 1)
+    d = zeros(T, n - 1)
     h = diff(r.x)
-    α = zeros(n-1)
+    α = zeros(T, n-1)
     for i = 2:n-1
         α[i] = 3*(a[i+1] - a[i])/h[i] - 3*(a[i] - a[i-1])/h[i-1]
     end
-    c = zeros(n)
-    l = ones(n)
-    μ = zeros(n)
-    z = zeros(n)
+    c = zeros(T, n)
+    l = ones(T, n)
+    μ = zeros(T, n)
+    z = zeros(T, n)
     l[1] = 1
     for i = 2:n-1
         l[i] = 2*(x[i+1] - x[i-1]) - h[i-1]*μ[i-1]
@@ -49,7 +53,7 @@ function CubicSplineInterpolator(x::AbstractVector,
     a = a[1:end-1]
     c = c[1:end-1]
     #static arrays
-    coef = Vector{NTuple{4,Float64}}(undef,n-1)
+    coef = Vector{NTuple{4,T}}(undef,n-1)
     for i = 1:n-1
         coef[i] = (a[i], b[i], c[i], d[i])
     end
@@ -62,30 +66,31 @@ end
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a clamped spline, where the first derivatives at the boundaries are set by `dy₁` and `dyₙ`.
 """
-function CubicSplineInterpolator(x::AbstractVector,
-                                 y::AbstractVector,
+function CubicSplineInterpolator(x::AbstractVector{T},
+                                 y::AbstractVector{T},
                                  dy₁,
                                  dyₙ,
-                                 boundaries::AbstractBoundaries=StrictBoundaries())
+                                 boundaries::AbstractBoundaries=StrictBoundaries()
+                                 ) where {T}
     #construct the underlying range, triggering some checks
     r = InterpolatorRange(x, y)
     n = r.n
     #compute coefficients
     #Burden, Richard L., and J. Douglas Faires. Numerical Analysis. 2011.
-    a = collect(r.y)
-    b = zeros(n - 1)
-    d = zeros(n - 1)
+    a = collect(T, r.y)
+    b = zeros(T, n - 1)
+    d = zeros(T, n - 1)
     h = diff(r.x)
-    α = zeros(n)
+    α = zeros(T, n)
     α[1] = 3*(a[2] - a[1])/h[1] - 3*dy₁
     for i = 2:n-1
         α[i] = 3*(a[i+1] - a[i])/h[i] - 3*(a[i] - a[i-1])/h[i-1]
     end
     α[n] = 3*dyₙ - 3*(a[n] - a[n - 1])/h[n-1]
-    c = zeros(n)
-    l = zeros(n)
-    μ = zeros(n)
-    z = zeros(n)
+    c = zeros(T, n)
+    l = zeros(T, n)
+    μ = zeros(T, n)
+    z = zeros(T, n)
     l[1] = 2*h[1]
     μ[1] = 0.5
     z[1] = α[1]/l[1]
@@ -105,7 +110,7 @@ function CubicSplineInterpolator(x::AbstractVector,
     a = a[1:end-1]
     c = c[1:end-1]
     #static arrays
-    coef = Vector{NTuple{4,Float64}}(undef,n-1)
+    coef = Vector{NTuple{4,T}}(undef,n-1)
     for i = 1:n-1
         coef[i] = (a[i], b[i], c[i], d[i])
     end
@@ -118,11 +123,7 @@ end
 
 Construct a `CubicSplineInterpolator` for the function `f` using `n` evenly spaced function evaluations in the range [`xa`,`xb`]. A natural spline is created.
 """
-function CubicSplineInterpolator(f::Function,
-                                 xa::Real,
-                                 xb::Real,
-                                 n::Int,
-                                 boundaries::AbstractBoundaries=StrictBoundaries())
+function CubicSplineInterpolator(f, xa, xb, n::Int, boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(CubicSplineInterpolator, f, xa, xb, n, boundaries)
 end
 
@@ -142,7 +143,7 @@ end
 
 struct BicubicSplineInterpolator{T,B} <: TwoDimensionalInterpolator
     G::InterpolatorGrid{T}
-    coef::Array{NTuple{16,Float64},2}
+    coef::Array{NTuple{16,T},2}
     boundaries::B
     i::RefValue{Int64} #previous cell index
     j::RefValue{Int64} #previous cell index
@@ -153,10 +154,11 @@ end
 
 Construct a `BicubicSplineInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
-function BicubicSplineInterpolator(x::AbstractVector,
-                                   y::AbstractVector,
-                                   Z::AbstractMatrix,
-                                   boundaries::AbstractBoundaries=StrictBoundaries())
+function BicubicSplineInterpolator(x::AbstractVector{T},
+                                   y::AbstractVector{T},
+                                   Z::AbstractMatrix{T},
+                                   boundaries::AbstractBoundaries=StrictBoundaries()
+                                   ) where {T}
     nx, ny = size(Z)
     #insist on at least 4 points in each dimension
     @assert nx >= 3 "bicubic interpolation requires at least 3 points along axis 1"
@@ -165,9 +167,9 @@ function BicubicSplineInterpolator(x::AbstractVector,
     @assert all(diff(diff(x)) .< 1e-8*maximum(abs.(x))) "grid spacing along axis 1 must be uniform"
     @assert all(diff(diff(y)) .< 1e-8*maximum(abs.(y))) "grid spacing along axis 2 must be uniform"
     #space for derivatives
-    dx = zeros(nx, ny)
-    dy = zeros(nx, ny)
-    dxy = zeros(nx, ny)
+    dx = zeros(T, nx, ny)
+    dy = zeros(T, nx, ny)
+    dxy = zeros(T, nx, ny)
     #first derivatives for internal nodes
     for i = 2:nx-1
         for j = 1:ny
@@ -203,8 +205,8 @@ function BicubicSplineInterpolator(x::AbstractVector,
     A = [1. 0. 0. 0.; 0. 0. 1. 0.; -3. 3. -2. -1.; 2. -2. 1. 1.]
     Aᵀ = transpose(A)
     #space for coefficients
-    f = zeros(4, 4)
-    α = Array{Array{Float64,2},2}(undef, nx-1, ny-1)
+    f = zeros(T, 4, 4)
+    α = Array{Array{T,2},2}(undef, nx-1, ny-1)
     for i = 1:nx-1
         for j = 1:ny-1
             #load the matrix of 16 values and derivatives
@@ -229,7 +231,7 @@ function BicubicSplineInterpolator(x::AbstractVector,
         end
     end
     #static coefficients
-    coef = Array{NTuple{16,Float64},2}(undef,nx-1,ny-1)
+    coef = Array{NTuple{16,T},2}(undef,nx-1,ny-1)
     for i = 1:nx-1
         for j = 1:ny-1
             coef[i,j] = Tuple(vec(α[i,j]))
@@ -243,9 +245,9 @@ end
 
 Construct a `BicubicSplineInterpolator` for the function `f` using a grid of `nx` points evenly spaced on the first axis in [`xa`,`xb`] and `ny` points evenly spaced on the second axis in [`ya`,`yb`].
 """
-function BicubicSplineInterpolator(f::Function,
-                                   xa::Real, xb::Real, nx::Int,
-                                   ya::Real, yb::Real, ny::Int,
+function BicubicSplineInterpolator(f,
+                                   xa, xb, nx::Int,
+                                   ya, yb, ny::Int,
                                    boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(BicubicSplineInterpolator, f, xa, xb, nx, ya, yb, ny, boundaries)
 end

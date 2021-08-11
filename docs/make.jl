@@ -15,6 +15,7 @@ makedocs(;
     ),
     pages=[
         "Home"=>"index.md",
+        "Tutorial"=>"tutorial.md",
         "One Dimension"=>"1d.md",
         "Two Dimensions"=>"2d.md",
         "Scattered, N Dimensions"=>"scattered.md",

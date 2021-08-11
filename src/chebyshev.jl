@@ -1,10 +1,10 @@
 export chebygrid, ChebyshevInterpolator, BichebyshevInterpolator
 
-ξ2x(ξ::Real, a::Real, b::Real) = (ξ + 1)*((b - a)/2) + a
+ξ2x(ξ, a, b) = (ξ + 1)*((b - a)/2) + a
 
-x2ξ(x::Real, a::Real, b::Real) = 2*(x - a)/(b - a) - 1
+x2ξ(x, a, b) = 2*(x - a)/(b - a) - 1
 
-x2θ(x::Real, a::Real, b::Real) = acos(x2ξ(x, a, b))
+x2θ(x, a, b) = acos(x2ξ(x, a, b))
 
 """
     chebygrid(n)
@@ -20,7 +20,7 @@ end
 
 Create an array of `n` chebyshev nodes in [`xa`,`xb`]
 """
-function chebygrid(xa::Real, xb::Real, n::Int)::Vector{Float64}
+function chebygrid(xa, xb, n::Int)::Vector{Float64}
     ξ2x.(chebygrid(n), xa, xb)
 end
 
@@ -29,7 +29,7 @@ end
 
 Create a two-dimensional grid of chebyshev nodes using `nx` points along the first axis, in [`xa`,`xb`], and `ny` points along the second axis, in [`ya`,`yb`].
 """
-function chebygrid(xa::Real, xb::Real, nx::Int, ya::Real, yb::Real, ny::Int)
+function chebygrid(xa, xb, nx::Int, ya, yb, ny::Int)
     x = chebygrid(xa, xb, nx)
     y = chebygrid(ya, yb, ny)
     X = x .* ones(length(y))'
@@ -37,27 +37,13 @@ function chebygrid(xa::Real, xb::Real, nx::Int, ya::Real, yb::Real, ny::Int)
     return X, Y
 end
 
-function ischebygrid(x::AbstractVector{<:Real})::Bool
+function ischebygrid(x)::Bool
     all(x2ξ.(x, minimum(x), maximum(x)) .- chebygrid(length(x)) .< 1e-8)
 end
 
-cheby(ξ::Real, k::Int)::Float64 = cos(k*acos(ξ))
+cheby(ξ, k::Int) = cos(k*acos(ξ))
 
-cheby(x::Real, k::Int, xa::Real, xb::Real)::Float64 = cheby(x2ξ(x, xa, xb), k)
-
-function cheby(x::Real,
-               a::AbstractVector{<:Real},
-               xa::Real,
-               xb::Real)::Float64
-    ξ = x2ξ(x, xa, xb)
-    y = a[1]
-    for k = 2:length(a)
-        y += a[k]*cheby(ξ, k-1)
-    end
-    return y
-end
-
-function chebymatrix(n::Int)::Array{Float64,2}
+function chebymatrix(n::Int)
     @assert n > 1 "can't construct cheby matrix smaller than 2 x 2"
     A = zeros(n,n)
     ξ = chebygrid(n)
@@ -123,8 +109,7 @@ Construct a `ChebyshevInterpolator` for the points defined by coordinates `x` an
 
     The Chebyshev interpolator is *not thread-safe*. It computes a cosine expansion in-place using an array stored with the object. A single `ChebyshevInterpolator` should never be called by multiple threads at once.
 """
-function ChebyshevInterpolator(x::AbstractVector{<:Real},
-                               y::AbstractVector{<:Real})
+function ChebyshevInterpolator(x, y)
     #check for basic issues
     rangecheck(x, y)
     #demand that the input points have chebyshev spacing
@@ -144,7 +129,7 @@ end
 
 Construct a `ChebyshevInterpolator` for the function `f` using `n` function evaluations in the range [`xa`,`xb`]. The function evaluations will occur on the chebyshev nodes.
 """
-function ChebyshevInterpolator(f::F, xa::Real, xb::Real, n::Int) where {F}
+function ChebyshevInterpolator(f::F, xa, xb, n::Int) where {F}
     #set up the range coordinates
     x = chebygrid(xa, xb, n)
     #evaluate the function at those coordinates
@@ -153,7 +138,7 @@ function ChebyshevInterpolator(f::F, xa::Real, xb::Real, n::Int) where {F}
     ChebyshevInterpolator(x, y)
 end
 
-function (ϕ::ChebyshevInterpolator)(x::Real)::Float64
+function (ϕ::ChebyshevInterpolator)(x)::Float64
     #always enforce boundaries
     ϕ.boundaries(x, ϕ.xa, ϕ.xb)
     #evaluate the cosine expansion in-place
@@ -196,9 +181,7 @@ Construct a `BichebyshevInterpolator` for the grid of points defined by coordina
 
     The Bichebyshev interpolator is *not thread-safe*. It computes a cosine expansion and does some linear algebra in-place using arrays stored with the object. A single `BichebyshevInterpolator` should never be called by multiple threads at once.
 """
-function BichebyshevInterpolator(x::AbstractVector{<:Real},
-                                 y::AbstractVector{<:Real},
-                                 Z::AbstractArray{<:Real,2})
+function BichebyshevInterpolator(x, y, Z)
     #check for basic grid problems
     gridcheck(x, y, Z)
     #grid properties
@@ -231,9 +214,7 @@ end
 
 Construct a `BichebyshevInterpolator` for the function `f` using a grid of `nx` points on the first axis in [`xa`,`xb`] and `ny` points on the second axis in [`ya`,`yb`].
 """
-function BichebyshevInterpolator(f::Function,
-                                 xa::Real, xb::Real, nx::Int,
-                                 ya::Real, yb::Real, ny::Int)
+function BichebyshevInterpolator(f, xa, xb, nx::Int, ya, yb, ny::Int)
     #set up the grid
     X, Y = chebygrid(xa, xb, nx, ya, yb, ny)
     #evaluate the function at chebyshev grid points
@@ -242,7 +223,7 @@ function BichebyshevInterpolator(f::Function,
     BichebyshevInterpolator(X[:,1], Y[1,:], Z)
 end
 
-function (Φ::BichebyshevInterpolator)(x::Real, y::Real)::Float64
+function (Φ::BichebyshevInterpolator)(x, y)
     #always enforce boundaries
     Φ.boundaries(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb)
     #evaluate Chebyshev polys at the coordinates recursively and in-place
