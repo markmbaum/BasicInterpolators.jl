@@ -34,12 +34,19 @@ function findcell(q, V, n::Int)::Int64
     return ilo
 end
 
+incell(x, X, i::Int64)::Bool = @inbounds (x >= X[i] && x <= X[i+1])
+
 function findcell(x, ϕ::OneDimensionalInterpolator)::Int64
     #check previous index used
     i::Int64 = ϕ.i[]
-    @inbounds (x >= ϕ.r.x[i]) && (x <= ϕ.r.x[i+1]) && return(i)
+    xᵣ = ϕ.r.x
+    incell(x, xᵣ, i) && return(i)
+    #check adjacent cells
+    n = ϕ.r.n
+    i > 1 && incell(x, xᵣ, i-1) && return(i-1)
+    i < n && incell(x, xᵣ, i+1) && return(i+1)
     #didn't work, find a fresh cell
-    i = findcell(x, ϕ.r.x, ϕ.r.n)
+    i = findcell(x, xᵣ, n)
     #store the index
     ϕ.i[] = i
     return i
@@ -49,14 +56,12 @@ function findcell(x, y, Φ::TwoDimensionalInterpolator)::NTuple{2,Int64}
     #check previous indices used
     i::Int64 = Φ.i[]
     j::Int64 = Φ.j[]
-    @inbounds if (x >= Φ.G.x[i]) && (x <= Φ.G.x[i+1])
-        @inbounds if (y >= Φ.G.y[j]) & (y <= Φ.G.y[j+1])
-            return i,j
-        end
-    end
+    xᵣ = Φ.G.x
+    yᵣ = Φ.G.y
+    incell(x, xᵣ, i) && incell(y, yᵣ, j) && return(i,j)
     #didn't work, find a fresh cell
-    i = findcell(x, Φ.G.x, Φ.G.nx)
-    j = findcell(y, Φ.G.y, Φ.G.ny)
+    i = findcell(x, xᵣ, Φ.G.nx)
+    j = findcell(y, yᵣ, Φ.G.ny)
     #store the indices
     Φ.i[] = i
     Φ.j[] = j
