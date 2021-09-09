@@ -1,4 +1,4 @@
-function interpolator_error(T::Type, f::Function, xa::Real, xb::Real, n::Int)::Float64
+function interpolator_error(T::Type, f::Function, xa::Real, xb::Real, n::Int)
     ϕ = T(f, xa, xb, n)
     x = collect(LinRange(xa, xb, 1000))
     fy = f.(x)
@@ -8,7 +8,7 @@ end
 
 function interpolator_error(T::Type, f::Function,
                xa::Real, xb::Real, nx::Int,
-               ya::Real, yb::Real, ny::Int)::Float64
+               ya::Real, yb::Real, ny::Int)
     Φ = T(f, xa, xb, nx, ya, yb, ny)
     x = collect(LinRange(xa, xb, 250))
     y = collect(LinRange(ya, yb, 250))

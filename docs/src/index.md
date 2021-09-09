@@ -2,8 +2,9 @@
 
 Welcome to the `BasicInterpolators` documentation. This package provides a collection of common interpolation recipes. Quick facts about the package:
 * The `Interpolator` types are the main focus. To use them, you construct an interpolator object then call it like a function. There are also some functions for things like one-off polynomial interpolation.
-* With the exeption of the [Chebyshevs](chebyshev.md), interpolators can be constructed with any numeric type that supports the usual arithmetic operations necessary for interpolating. They will, however, insist that the element types of your grid(s) and values are uniform.
+* Interpolators can be constructed with any numeric type that supports the usual arithmetic operations necessary for interpolating. They will, however, insist that the element types of your grid(s) and values are uniform, often converting to consistent element types automatically.
 * There are two-dimensional grid interpolators, but not higher.
+* All the interpolators should be compatible with automatic differentiation, specifically [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl).
 
 --------------------------------------------------------------------------------
 

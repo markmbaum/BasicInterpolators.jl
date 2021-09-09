@@ -9,7 +9,7 @@ function neville_error(n::Int, f::Function)
     #dense evaluations
     xx = collect(LinRange(minimum(x)-1, maximum(x)+1, 1000))
     pyy = p.(xx)
-    fyy = [f(xx[i], x, y) for i=1:length(xx)]
+    fyy = [f(xx[i], x, y) for i ∈ eachindex(xx)]
     #error
     maximum(abs.(pyy - fyy))
 end

@@ -8,7 +8,8 @@ using LinearAlgebra: Symmetric
 function distance(a, b, n::Int)
     r = 0.0
     for i = 1:n
-        @inbounds r += (a[i] - b[i])*(a[i] - b[i])
+        @inbounds d = a[i] - b[i]
+        r += d*d
     end
     sqrt(r)
 end

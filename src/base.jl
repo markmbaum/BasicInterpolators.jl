@@ -16,22 +16,22 @@ abstract type TwoDimensionalInterpolator end
 
 Use bisection search to find the cell containing `q`, assuming `V` is a sorted vector of `n` coordinates. The returned integer is the index of the element in `V` immediately less than `q`. For example, if `findcell` returns 2, then `q ∈ [V[2],V[3])`. If `q` is less than every element in `V`, 1 is returned, indicating the first cell in `V`. If `q` is greater than every element in `V`, `length(V)-1` is returned, indicating the last cell in `V`.
 """
-function findcell(q, V, n::Int)::Int64
+function findcell(q, V, n::Int64)::Int64
     #handle boundaries
     @inbounds (q <= V[1]) && return(1)
     @inbounds (q >= V[n]) && return(n - 1)
     #bisection search for the containing cell
-    ilo = 0
-    ihi = n
-    while ihi - ilo > 1
-        imid = (ihi + ilo) ÷ 2
-        @inbounds if V[imid] > q
-            ihi = imid
+    L = 0
+    H = n
+    while H - L > 1
+        M = (H + L) ÷ 2
+        @inbounds if V[M] > q
+            H = M
         else
-            ilo = imid
+            L = M
         end
     end
-    return ilo
+    return L
 end
 
 incell(x, X, i::Int64)::Bool = @inbounds (x >= X[i] && x <= X[i+1])
@@ -86,6 +86,7 @@ Performs no boundary checking. Allows interpolators to blindly extrapolate when 
 """
 struct NoBoundaries <: AbstractBoundaries end
 
+#totally empty function
 function (B::NoBoundaries)(x...) end
 
 #--------------------------------
@@ -146,8 +147,9 @@ struct InterpolatorRange{T}
     y::Vector{T}
 end
 
-function InterpolatorRange(x::AbstractVector{T}, y::AbstractVector{T}) where {T}
+function InterpolatorRange(x::AbstractVector, y::AbstractVector)
     #collect and copy
+    T = promote_type(eltype(x), eltype(y))
     x = collect(T, x)
     y = collect(T, y)
     #check for basic problems
@@ -157,16 +159,18 @@ function InterpolatorRange(x::AbstractVector{T}, y::AbstractVector{T}) where {T}
     xa = minimum(x)
     xb = maximum(x)
     #construct
-    InterpolatorRange(n, x, xa, xb, y)
+    InterpolatorRange{T}(n, x, xa, xb, y)
 end
 
-function rangecheck(x::AbstractVector, y::AbstractVector)
+function rangecheck(x::AbstractVector, y::AbstractVector, minpts=2)
     nx, ny = length(x), length(y)
     @assert nx == ny "length of x ($nx) does not match length of y ($ny)"
+    @assert nx >= minpts "must have at least $minpts points in the interpolation range"
     @assert all(diff(x) .> 0.0) "grid points must be in strictly ascending order"
 end
 
-function linstruct(I::Type, f, xa::T, xb::T, n::Int, boundaries::AbstractBoundaries) where {T}
+function linstruct(I::Type, f::F, xa, xb, n::Int, boundaries::AbstractBoundaries) where {F}
+    @assert n > 1 "cannot construct a length<=1 interpolation range"
     x = LinRange(xa, xb, n)
     y = f.(x)
     I(x, y, boundaries)
@@ -198,10 +202,9 @@ struct InterpolatorGrid{T}
     Z::Array{T,2}
 end
 
-function InterpolatorGrid(x::AbstractVector{T},
-                          y::AbstractVector{T},
-                          Z::AbstractMatrix{T}) where {T}
+function InterpolatorGrid(x::AbstractVector, y::AbstractVector, Z::AbstractMatrix)
     #collect and copy
+    T = promote_type(eltype(x), eltype(y), eltype(Z))
     x = collect(T, x)
     y = collect(T, y)
     Z = collect(T, Z)
@@ -211,19 +214,22 @@ function InterpolatorGrid(x::AbstractVector{T},
     xa, xb = minimum(x), maximum(x)
     ya, yb = minimum(y), maximum(y)
     #construct the object
-    InterpolatorGrid(length(x), length(y), x, y, xa, xb, ya, yb, Z)
+    InterpolatorGrid{T}(length(x), length(y), x, y, xa, xb, ya, yb, Z)
 end
 
-function gridcheck(x::AbstractVector, y::AbstractVector, Z::AbstractMatrix)
-    @assert (length(x) > 1) & (length(y) > 1) "grid must have more than one point in each direction"
+function gridcheck(x::AbstractVector, y::AbstractVector, Z::AbstractMatrix, minpts=2)
+    @assert (length(x) >= minpts) & (length(y) >= minpts) "must have at least $minpts points in each dimension of interpolation grid"
     @assert size(Z) == (length(x), length(y)) "dimensions mismatched, size(Z) = $(size(Z)) but length(x) = $(length(x)) and length(y) = $(length(y))"
     @assert (all(diff(x) .> 0.0) & all(diff(y) .>= 0.0)) "grid coordinates must be monotonically increasing without duplicates"
 end
 
-function linstruct(I::Type, f,
-                   xa::T, xb::T, nx::Int,
-                   ya::T, yb::T, ny::Int,
-                   boundaries::AbstractBoundaries) where {T}
+function linstruct(I::Type, f::F,
+                   xa, xb, nx::Int,
+                   ya, yb, ny::Int,
+                   boundaries::AbstractBoundaries) where {F}
+    @assert (nx > 1) & (ny > 1) "cannot use a length<=1 grid axis"
+    xa, xb, ya, yb = promote(xa, xb, ya, yb)
+    T = typeof(xa)
     x = LinRange(xa, xb, nx)
     y = LinRange(ya, yb, ny)
     X = x .* ones(T, ny)'

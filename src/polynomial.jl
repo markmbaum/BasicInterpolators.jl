@@ -99,15 +99,15 @@ function vandermonde!(c, x, y)
 end
 
 """
-    cubichermite(x, x₁, x₂, y₁, y₂, dy₁, dy₂)
+    cubichermite(x, x₁, x₂, y₁, y₂, y₁′, y₂′)
 
 Interpolate a cubic polynomial between two points, given its values and first derivatives at the points.
 """
-function cubichermite(x, x₁, x₂, y₁, y₂, dy₁, dy₂)
+function cubichermite(x, x₁, x₂, y₁, y₂, y₁′, y₂′)
     Δx = (x₂ - x₁)
     ξ = (x - x₁)/Δx
-    u = Δx*dy₁
-    v = Δx*dy₂
+    u = Δx*y₁′
+    v = Δx*y₂′
     ξ^3*(2*y₁ + u - 2*y₂ + v) + ξ^2*(-3*y₁ - 2*u + 3*y₂ - v) + ξ*u + y₁
 end
 

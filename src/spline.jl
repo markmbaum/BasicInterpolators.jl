@@ -18,11 +18,9 @@ end
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a natural spline, where the second derivative is set to zero at the boundaries.
 """
-function CubicSplineInterpolator(x::AbstractVector{T},
-                                 y::AbstractVector{T},
-                                 boundaries::AbstractBoundaries=StrictBoundaries()
-                                 ) where {T}
+function CubicSplineInterpolator(x, y, boundaries::AbstractBoundaries=StrictBoundaries())
     #construct the underlying range, triggering some checks
+    T = promote_type(eltype(x), eltype(y))
     r = InterpolatorRange(x, y)
     n = r.n
     #compute coefficients
@@ -66,13 +64,13 @@ end
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a clamped spline, where the first derivatives at the boundaries are set by `dy₁` and `dyₙ`.
 """
-function CubicSplineInterpolator(x::AbstractVector{T},
-                                 y::AbstractVector{T},
-                                 dy₁,
-                                 dyₙ,
-                                 boundaries::AbstractBoundaries=StrictBoundaries()
-                                 ) where {T}
+function CubicSplineInterpolator(x,
+                                 y,
+                                 dy₁::Real,
+                                 dyₙ::Real,
+                                 boundaries::AbstractBoundaries=StrictBoundaries())
     #construct the underlying range, triggering some checks
+    T = promote_type(eltype(x), eltype(y))
     r = InterpolatorRange(x, y)
     n = r.n
     #compute coefficients
@@ -123,7 +121,11 @@ end
 
 Construct a `CubicSplineInterpolator` for the function `f` using `n` evenly spaced function evaluations in the range [`xa`,`xb`]. A natural spline is created.
 """
-function CubicSplineInterpolator(f, xa, xb, n::Int, boundaries::AbstractBoundaries=StrictBoundaries())
+function CubicSplineInterpolator(f,
+                                 xa::Real,
+                                 xb::Real,
+                                 n::Int,
+                                 boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(CubicSplineInterpolator, f, xa, xb, n, boundaries)
 end
 
@@ -154,11 +156,7 @@ end
 
 Construct a `BicubicSplineInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
-function BicubicSplineInterpolator(x::AbstractVector{T},
-                                   y::AbstractVector{T},
-                                   Z::AbstractMatrix{T},
-                                   boundaries::AbstractBoundaries=StrictBoundaries()
-                                   ) where {T}
+function BicubicSplineInterpolator(x, y, Z, boundaries::AbstractBoundaries=StrictBoundaries())
     nx, ny = size(Z)
     #insist on at least 4 points in each dimension
     @assert nx >= 3 "bicubic interpolation requires at least 3 points along axis 1"
@@ -166,6 +164,11 @@ function BicubicSplineInterpolator(x::AbstractVector{T},
     #insist on even spacing along both axes
     @assert all(diff(diff(x)) .< 1e-8*maximum(abs.(x))) "grid spacing along axis 1 must be uniform"
     @assert all(diff(diff(y)) .< 1e-8*maximum(abs.(y))) "grid spacing along axis 2 must be uniform"
+    #type consistency
+    T = promote_type(eltype(x), eltype(y), eltype(Z))
+    x = collect(T, x)
+    y = collect(T, y)
+    Z = collect(T, Z)
     #space for derivatives
     dx = zeros(T, nx, ny)
     dy = zeros(T, nx, ny)
@@ -202,7 +205,7 @@ function BicubicSplineInterpolator(x::AbstractVector{T},
         dxy[i,ny] = dx[i,ny-2]/2 - 2*dx[i,ny-1] + 3*dx[i,ny]/2
     end
     #matrix needed to compute coefficients and its transpose
-    A = [1. 0. 0. 0.; 0. 0. 1. 0.; -3. 3. -2. -1.; 2. -2. 1. 1.]
+    A = T[1. 0. 0. 0.; 0. 0. 1. 0.; -3. 3. -2. -1.; 2. -2. 1. 1.]
     Aᵀ = transpose(A)
     #space for coefficients
     f = zeros(T, 4, 4)
@@ -232,10 +235,8 @@ function BicubicSplineInterpolator(x::AbstractVector{T},
     end
     #static coefficients
     coef = Array{NTuple{16,T},2}(undef,nx-1,ny-1)
-    for i = 1:nx-1
-        for j = 1:ny-1
-            coef[i,j] = Tuple(vec(α[i,j]))
-        end
+    for i = 1:nx-1, j = 1:ny-1
+        coef[i,j] = Tuple(vec(α[i,j]))
     end
     BicubicSplineInterpolator(InterpolatorGrid(x, y, Z), coef, boundaries, Ref(1), Ref(1))
 end
@@ -266,7 +267,7 @@ function (Φ::BicubicSplineInterpolator)(x, y)
     Δx², Δx³ = Δx^2, Δx^3
     Δy², Δy³ = Δy^2, Δy^3
     #final interpolation calculation
-    ( α[1]      + α[2]*Δx      + α[3]*Δx²      + α[4]*Δx³
+    @inbounds ( α[1]      + α[2]*Δx      + α[3]*Δx²      + α[4]*Δx³
     + α[5]*Δy   + α[6]*Δx*Δy   + α[7]*Δx²*Δy   + α[8]*Δx³*Δy
     + α[9]*Δy²  + α[10]*Δx*Δy² + α[11]*Δx²*Δy² + α[12]*Δx³*Δy²
     + α[13]*Δy³ + α[14]*Δx*Δy³ + α[15]*Δx²*Δy³ + α[16]*Δx³*Δy³ )

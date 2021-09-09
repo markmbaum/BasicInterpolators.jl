@@ -11,18 +11,14 @@ x2θ(x, a, b) = acos(x2ξ(x, a, b))
 
 Create an array of `n` chebyshev nodes in [-1,1]
 """
-function chebygrid(n::Int)::Vector{Float64}
-    cos.(π*(n-1:-1:0)/(n-1))
-end
+chebygrid(n::Int) = cos.(π*(n-1:-1:0)/(n-1))
 
 """
     chebygrid(xa, xb, n)
 
 Create an array of `n` chebyshev nodes in [`xa`,`xb`]
 """
-function chebygrid(xa, xb, n::Int)::Vector{Float64}
-    ξ2x.(chebygrid(n), xa, xb)
-end
+chebygrid(xa, xb, n::Int) = ξ2x.(chebygrid(n), xa, xb)
 
 """
     chebygrid(xa, xb, nx, ya, yb, ny)
@@ -30,17 +26,16 @@ end
 Create a two-dimensional grid of chebyshev nodes using `nx` points along the first axis, in [`xa`,`xb`], and `ny` points along the second axis, in [`ya`,`yb`].
 """
 function chebygrid(xa, xb, nx::Int, ya, yb, ny::Int)
-    x = chebygrid(xa, xb, nx)
-    y = chebygrid(ya, yb, ny)
-    X = x .* ones(length(y))'
-    Y = y' .* ones(length(x))
+    X = chebygrid(xa, xb, nx) .* ones(ny)'
+    Y = chebygrid(ya, yb, ny)' .* ones(nx)
     return X, Y
 end
 
 function ischebygrid(x)::Bool
-    all(x2ξ.(x, minimum(x), maximum(x)) .- chebygrid(length(x)) .< 1e-8)
+    all(x2ξ.(x, minimum(x), maximum(x)) .- chebygrid(length(x)) .< 1e-6)
 end
 
+#could be slower than the recurrance
 cheby(ξ, k::Int) = cos(k*acos(ξ))
 
 function chebymatrix(n::Int)
@@ -48,18 +43,18 @@ function chebymatrix(n::Int)
     A = zeros(n,n)
     ξ = chebygrid(n)
     for j ∈ 1:n, k ∈ 1:n
-        A[j,k] = cheby(ξ[j], k-1)
+        @inbounds A[j,k] = cheby(ξ[j], k-1)
     end
     return A
 end
 
-function Tₖ!(T::Vector{Float64}, ξ::Float64, n::Int64)::Nothing
-    Tₖ₋₂::Float64 = 1.0 
-    Tₖ₋₁::Float64 = ξ
+function chebyrecurrance!(T, ξ, L::Int)::Nothing
+    Tₖ₋₂ = one(ξ)
+    Tₖ₋₁ = ξ
     @inbounds T[2] = Tₖ₋₁
-    for k = 3:n
+    for k = 3:L
         #compute next value
-        Tₖ::Float64 = 2*ξ*Tₖ₋₁ - Tₖ₋₂
+        Tₖ = 2ξ*Tₖ₋₁ - Tₖ₋₂
         #set array value
         @inbounds T[k] = Tₖ
         #swaps
@@ -69,13 +64,20 @@ function Tₖ!(T::Vector{Float64}, ξ::Float64, n::Int64)::Nothing
     nothing
 end
 
+function chebyrecurrance(ξ::U, L::Int) where {U}
+    T = Vector{U}(undef, L)
+    @inbounds T[1] = one(ξ)
+    chebyrecurrance!(T, ξ, L)
+    return T
+end
+
 #-------------------------------------------------------------------------------
 # cache for inverted cheby matrices needed for interpolator setup
 
 #a cache for the inverted matrices needed for Bicheby setup
-const invchebmat = Dict{Int64, Array{Float64,2}}()
+const invchebmat = Dict{Int64, Matrix{Float64}}()
 
-function invertedchebymatrix(n::Int64)::Array{Float64,2}
+function invertedchebymatrix(n::Int64)::Matrix{Float64}
     if !haskey(invchebmat, n)
         invchebmat[n] = inv(chebymatrix(n))
     end
@@ -85,17 +87,13 @@ end
 #-------------------------------------------------------------------------------
 # one-dimensional interpolation
 
-struct ChebyshevInterpolator{N} <: OneDimensionalInterpolator
-    #number of points
-    n::Int64
+struct ChebyshevInterpolator{N,T} <: OneDimensionalInterpolator
     #lowest value in range
-    xa::Float64
+    xa::T
     #highest value in range
-    xb::Float64
+    xb::T
     #interpolation coefficents
-    a::NTuple{N,Float64}
-    #vector for writing cosine expansion in place
-    c::Vector{Float64}
+    a::NTuple{N,T}
     #must always have strict boundaries
     boundaries::StrictBoundaries
 end
@@ -104,24 +102,23 @@ end
     ChebyshevInterpolator(x, y)
 
 Construct a `ChebyshevInterpolator` for the points defined by coordinates `x` and values `y`. The `x` coordinates *must* be arranged on a chebyshev grid, which can be generated using the [`chebygrid`](@ref) function.
-
-!!! warning
-
-    The Chebyshev interpolator is *not thread-safe*. It computes a cosine expansion in-place using an array stored with the object. A single `ChebyshevInterpolator` should never be called by multiple threads at once.
 """
 function ChebyshevInterpolator(x, y)
+    #same types
+    T = promote_type(eltype(x), eltype(y))
+    x = collect(T, x)
+    y = collect(T, y)
     #check for basic issues
-    rangecheck(x, y)
+    rangecheck(x, y, 3)
     #demand that the input points have chebyshev spacing
     @assert ischebygrid(x) "points must be on a chebyshev grid"
-    #number of points/coefficients
-    n = length(x)
     #get the inverted cheby matrix, from cache or fresh
-    A = invertedchebymatrix(n)
+    N = length(x)
+    A = invertedchebymatrix(N)
     #generate expansion coefficients
     a = Tuple(A*y)
     #construct
-    ChebyshevInterpolator(n, minimum(x), maximum(x), a, ones(n), StrictBoundaries())
+    ChebyshevInterpolator{N,T}(minimum(x), maximum(x), a, StrictBoundaries())
 end
 
 """
@@ -138,36 +135,46 @@ function ChebyshevInterpolator(f::F, xa, xb, n::Int) where {F}
     ChebyshevInterpolator(x, y)
 end
 
-function (ϕ::ChebyshevInterpolator)(x)::Float64
+function (ϕ::ChebyshevInterpolator{N,U})(x) where {N,U}
     #always enforce boundaries
     ϕ.boundaries(x, ϕ.xa, ϕ.xb)
-    #evaluate the cosine expansion in-place
-    Tₖ!(ϕ.c, x2ξ(x, ϕ.xa, ϕ.xb), ϕ.n)
-    #then apply the coefficients
-    dot(ϕ.a, ϕ.c)
+    #get coordiante in ξ space
+    ξ = x2ξ(x, ϕ.xa, ϕ.xb)
+    #first two elements of cheby recursion
+    Tₖ₋₂ = one(ξ)
+    Tₖ₋₁ = ξ
+    #first two terms of dot product
+    @inbounds y = Tₖ₋₂*ϕ.a[1] + Tₖ₋₁*ϕ.a[2]
+    #cheby recursion and rest of terms in dot product, all at once
+    for k = 3:N
+        #next value in recursion
+        Tₖ = 2*ξ*Tₖ₋₁ - Tₖ₋₂
+        #next term in dot product
+        @inbounds y += Tₖ*ϕ.a[k]
+        #swaps
+        Tₖ₋₂ = Tₖ₋₁
+        Tₖ₋₁ = Tₖ
+    end
+    return y
 end
 
 #-------------------------------------------------------------------------------
 # bichebyshev interpolation, a little trickier now!
 
-struct BichebyshevInterpolator <: TwoDimensionalInterpolator
-    #number of points along axis 1
-    nx::Int64
-    #number of points along axis 2
-    ny::Int64
+struct BichebyshevInterpolator{M,N,U} <: TwoDimensionalInterpolator
     #lowest value on axis 1
-    xa::Float64
+    xa::U
     #highest value on axis 1
-    xb::Float64
+    xb::U
     #lowest value on axis 2
-    ya::Float64
+    ya::U
     #highest value on axis 2
-    yb::Float64
+    yb::U
     #matrix and vectors for doing the interpolation
-    M::Matrix{Float64} # size ny x nx
-    a::Vector{Float64} # length ny for cosine expansion in θy
-    b::Vector{Float64} # length nx for cosine expansion in θx
-    c::Vector{Float64} # length ny for doing M*b in place
+    A::Matrix{U} # size ny x nx
+    a::Vector{U} # length ny for cosine expansion in θy
+    b::Vector{U} # length nx for cosine expansion in θx
+    c::Vector{U} # length ny for doing M*b in place
     #must always use strict boundaries
     boundaries::StrictBoundaries
 end
@@ -182,31 +189,35 @@ Construct a `BichebyshevInterpolator` for the grid of points defined by coordina
     The Bichebyshev interpolator is *not thread-safe*. It computes a cosine expansion and does some linear algebra in-place using arrays stored with the object. A single `BichebyshevInterpolator` should never be called by multiple threads at once.
 """
 function BichebyshevInterpolator(x, y, Z)
+    #same types
+    T = promote_type(eltype(x), eltype(y), eltype(Z))
+    x = collect(T, x)
+    y = collect(T, y)
+    Z = collect(T, Z)
     #check for basic grid problems
-    gridcheck(x, y, Z)
+    gridcheck(x, y, Z, 3)
     #grid properties
     nx, ny = length(x), length(y)
-    xa, xb = minimum(x), maximum(x)
-    ya, yb = minimum(y), maximum(y)
+    xa, xb = T(minimum(x)), T(maximum(x))
+    ya, yb = T(minimum(y)), T(maximum(y))
     #reject any non-cheby grid spacing
     @assert ischebygrid(x) "axis 1 coordinates must be on a chebyshev grid"
     @assert ischebygrid(y) "axis 2 coordinates must be on a chebyshev grid"
     #get inverted matrices from cache or generate them
     B = invertedchebymatrix(nx)
-    A = invertedchebymatrix(ny)
     #generate interpolation coefficients along axis 1 for each value of axis 2
-    α = zeros(nx, ny)
+    α = zeros(T, nx, ny)
     for j = 1:ny
         mul!(view(α,:,j), B, view(Z,:,j))
     end
     #then combine α and A
-    M = A*α'
+    A = invertedchebymatrix(ny)*α'
     #other vectors we need for doing the actual interpolation
-    a = ones(ny)
-    b = ones(nx)
-    c = zeros(ny)
+    a = ones(T, ny)
+    b = ones(T, nx)
+    c = zeros(T, ny)
     #done
-    BichebyshevInterpolator(nx, ny, xa, xb, ya, yb, M, a, b, c, StrictBoundaries())
+    BichebyshevInterpolator{ny,nx,T}(xa, xb, ya, yb, A, a, b, c, StrictBoundaries())
 end
 
 """
@@ -214,7 +225,7 @@ end
 
 Construct a `BichebyshevInterpolator` for the function `f` using a grid of `nx` points on the first axis in [`xa`,`xb`] and `ny` points on the second axis in [`ya`,`yb`].
 """
-function BichebyshevInterpolator(f, xa, xb, nx::Int, ya, yb, ny::Int)
+function BichebyshevInterpolator(f::F, xa, xb, nx::Int, ya, yb, ny::Int) where {F}
     #set up the grid
     X, Y = chebygrid(xa, xb, nx, ya, yb, ny)
     #evaluate the function at chebyshev grid points
@@ -223,15 +234,42 @@ function BichebyshevInterpolator(f, xa, xb, nx::Int, ya, yb, ny::Int)
     BichebyshevInterpolator(X[:,1], Y[1,:], Z)
 end
 
-function (Φ::BichebyshevInterpolator)(x, y)
-    #always enforce boundaries
+function (Φ::BichebyshevInterpolator{M,N,U})(x::U, y::U) where {M,N,U}
+    #always enforce boundaries for Chebyshev
     Φ.boundaries(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb)
     #evaluate Chebyshev polys at the coordinates recursively and in-place
-    Tₖ!(Φ.a, x2ξ(y, Φ.ya, Φ.yb), Φ.ny)
-    Tₖ!(Φ.b, x2ξ(x, Φ.xa, Φ.xb), Φ.nx)
+    chebyrecurrance!(Φ.a, x2ξ(y, Φ.ya, Φ.yb), M)
+    chebyrecurrance!(Φ.b, x2ξ(x, Φ.xa, Φ.xb), N)
     #perform M*b, which interpolates along the first axis, also in-place
-    mul!(Φ.c, Φ.M, Φ.b)
+    mul!(Φ.c, Φ.A, Φ.b)    
     #then a'*c interpolates along the second axis
-    dot(Φ.a, Φ.c)
+    return dot(Φ.a, Φ.c)
 end
- 
+
+function (Φ::BichebyshevInterpolator{M,N,U})(x, y) where {M,N,U}
+    #always enforce boundaries for Chebyshev
+    Φ.boundaries(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb)
+    #coordinates in ξ space
+    ξx = x2ξ(x, Φ.xa, Φ.xb)
+    ξy = x2ξ(y, Φ.ya, Φ.yb)
+    #allocating expansion in the x direction
+    b = chebyrecurrance(ξx, N)
+    #allocate a and put A*b in it
+    a = Vector{typeof(ξy)}(undef,M)
+    mul!(a, Φ.A, b)
+    #then perform the y-axis expansion and dot product simulataneously    
+    Tₖ₋₂ = one(ξy)
+    Tₖ₋₁ = ξy
+    @inbounds z = a[1] + ξy*a[2]
+    for i = 3:M
+        #compute next value
+        Tₖ = 2ξy*Tₖ₋₁ - Tₖ₋₂
+        #update running dot product
+        @inbounds z += a[i]*Tₖ
+        #swaps
+        Tₖ₋₂ = Tₖ₋₁
+        Tₖ₋₁ = Tₖ
+    end
+    return z
+
+end

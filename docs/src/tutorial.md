@@ -19,8 +19,7 @@ Each of the types can be constructed by passing vectors/arrays with the points t
 using BasicInterpolators: ChebyshevInterpolator
 f(x) = sin(2x) + x^2*exp(x);
 p = ChebyshevInterpolator(f, -3, 0, 16);
-f(-1.5)
-p(-1.5)
+(f(-1.5) - p(-1.5))/f(-1.5)
 ```
 In the background, the constructor generates 16 points between -3 and 0, evaluates the function at those points, then sets up everything it needs to interpolate in that range.
 
@@ -71,7 +70,7 @@ Extrapolation blindly uses the interpolating curve/surface of the nearest bounda
 
 ## Changing Data
 
-The interpolators store a copy of the coordinates and values. To change the values, retrieve the array with the `values` function.
+The interpolators store a copy of the coordinates and values. To change the values (at your own risk), retrieve the array with the `values` function.
 
 ```@repl
 using BasicInterpolators
