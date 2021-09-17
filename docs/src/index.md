@@ -20,8 +20,9 @@ For a little extra on the Chebyshev interpolators, look [**here**](chebyshev.md)
 --------------------------------------------------------------------------------
 ## Other Packages
 
-If you need more features/methods, please look in other packages:
+If you need more features/methods/dimensions, please look in other packages:
 1. [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)
 2. [Dierckx.jl](https://github.com/kbarbary/Dierckx.jl)
 3. [GridInterpolations.jl](https://github.com/sisl/GridInterpolations.jl)
 4. [ApproXD](https://github.com/floswald/ApproXD.jl)
+5. [FastChebInterp.jl](https://github.com/stevengj/FastChebInterp.jl)
