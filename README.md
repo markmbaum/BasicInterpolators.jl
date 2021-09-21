@@ -41,7 +41,7 @@ julia> ]add BasicInterpolators
 - [x] radial basis functions (any choice of function)
 - [x] Shepard
 
-See the [**documentation**](https://markmbaum.github.io/BasicInterpolators.jl/stable) for examples, discussion, and details.
+See the [**documentation**](https://markmbaum.github.io/BasicInterpolators.jl/dev/) for examples, discussion, and details.
 
 -----
 
