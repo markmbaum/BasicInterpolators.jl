@@ -10,5 +10,5 @@ function vandermonde_error(n)
 end
 
 for n = 1:5
-    @test vandermonde_error(n) < 1e-2
+    @test vandermonde_error(n) < 0.01
 end

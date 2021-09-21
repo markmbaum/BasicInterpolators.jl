@@ -252,6 +252,7 @@ function (Φ::BichebyshevInterpolator{M,N,U})(x, y) where {M,N,U}
     #coordinates in ξ space
     ξx = x2ξ(x, Φ.xa, Φ.xb)
     ξy = x2ξ(y, Φ.ya, Φ.yb)
+    ξx, ξy = promote(ξx, ξy)
     #allocating expansion in the x direction
     b = chebyrecurrance(ξx, N)
     #allocate a and put A*b in it
