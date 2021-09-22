@@ -75,16 +75,16 @@ end
 function vandermonde!(c, x, y)
     @assert length(c) == length(x) == length(y) "vandermonde! requires length(c) == length(x) == length(y)"
     n = length(x)
-    s = zeros(n)
-    c[:] .= 0.0
+    s = similar(c)
+    c[:] .= zero(eltype(c))
     s[n] = -x[1]
-    for i = 2:n
+    @inbounds for i = 2:n
         for j = n-i+1:n-1
             s[j] -= x[i]*s[j+1]
         end
         s[n] -= x[i]
     end
-    for j = 1:n
+    @inbounds for j = 1:n
         ϕ = n
         for k = n:-1:2
             ϕ = (k-1)*s[k] + x[j]*ϕ
@@ -150,6 +150,12 @@ function (ϕ::LinearInterpolator)(x)
     (x - x₁)*(y₂ - y₁)/(x₂ - x₁) + y₁
 end
 
+Base.getindex(ϕ::LinearInterpolator, i) = ϕ.r.y[i]
+
+function Base.setindex!(ϕ::LinearInterpolator, v, i)
+    ϕ.r.y[i] = v
+end
+
 #-------------------------------------------------------------------------------
 # piecewise cubic interpolator without continuous derivatives (not splines)
 
@@ -193,6 +199,12 @@ function (ϕ::CubicInterpolator)(x)
     end
     #interpolate
     @inbounds cubic(x, view(ϕ.r.x,I), view(ϕ.r.y,I))
+end
+
+Base.getindex(ϕ::CubicInterpolator, i) = ϕ.r.y[i]
+
+function Base.setindex!(ϕ::CubicInterpolator, v, i)
+    ϕ.r.y[i] = v
 end
 
 #-------------------------------------------------------------------------------
@@ -244,6 +256,12 @@ function (Φ::BilinearInterpolator)(x, y)
     u = xx₁*(Z₂₂ - Z₁₂)/x₂x₁ + Z₁₂
     #then finish by interpolating between the interpolated values along axis 2
     (y - y₁)*(u - t)/(y₂ - y₁) + t
+end
+
+Base.getindex(Φ::BilinearInterpolator, i, j) = Φ.G.Z[i,j]
+
+function Base.setindex!(Φ::BilinearInterpolator, v, i, j)
+    Φ.G.Z[i,j] = v
 end
 
 #-------------------------------------------------------------------------------
@@ -312,4 +330,10 @@ function (Φ::BicubicInterpolator)(x, y)
     )
     #final interpolation
     cubic(y, yᵣ, zₓ)
+end
+
+Base.getindex(Φ::BicubicInterpolator, i, j) = Φ.G.Z[i,j]
+
+function Base.setindex!(Φ::BicubicInterpolator, v, i, j)
+    Φ.G.Z[i,j] = v
 end

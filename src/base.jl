@@ -1,9 +1,7 @@
-export findcell, NoBoundaries, WeakBoundaries, StrictBoundaries, values
+export findcell, NoBoundaries, WeakBoundaries, StrictBoundaries
 
 #-------------------------------------------------------------------------------
 # abstract classes for interpolators
-
-export OneDimensionalInterpolator, TwoDimensionalInterpolator
 
 abstract type OneDimensionalInterpolator end
 abstract type TwoDimensionalInterpolator end
@@ -176,8 +174,6 @@ function linstruct(I::Type, f::F, xa, xb, n::Int, boundaries::AbstractBoundaries
     I(x, y, boundaries)
 end
 
-values(ϕ::OneDimensionalInterpolator) = ϕ.r.y
-
 #-------------------------------------------------------------------------------
 # a base structure for 2d grid interpolation and some related functions
 
@@ -237,5 +233,3 @@ function linstruct(I::Type, f::F,
     Z = f.(X, Y)
     I(x, y, Z, boundaries)
 end
-
-values(ϕ::TwoDimensionalInterpolator) = ϕ.G.Z

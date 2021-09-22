@@ -21,7 +21,6 @@ T1 = [LinearInterpolator,
       ChebyshevInterpolator]
 T2 = [BilinearInterpolator,
       BicubicInterpolator,
-      BicubicSplineInterpolator,
       BichebyshevInterpolator]
 
 for T ∈ T1

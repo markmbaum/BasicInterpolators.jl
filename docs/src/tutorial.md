@@ -68,15 +68,16 @@ p(3)
 ```
 Extrapolation blindly uses the interpolating curve/surface of the nearest boundary cell in the grid, so it can easily return wild values, especially for the cubic interpolators. That's why it's not allowed by default. All of the above applies to the two-dimensional interpolators as well.
 
-## Changing Data
+## Viewing/Changing Data
 
-The interpolators store a copy of the coordinates and values. To change the values (at your own risk), retrieve the array with the `values` function.
+The interpolators store a copy of the coordinates and values. When possible, you can get set the values inside an interpolator with regular indexing (`getindex` and `setindex!`).
 
 ```@repl
 using BasicInterpolators
 p = LinearInterpolator([0, 1], [0, 1]);
 p(0.5)
-y = values(p);
-y[1] = 2
+p[1]
+p[1] = 2
+p[1]
 p(0.5)
 ```

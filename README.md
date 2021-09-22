@@ -33,7 +33,6 @@ julia> ]add BasicInterpolators
 
 - [x] linear
 - [x] piecewise cubic
-- [x] cubic spline (uniform spacing in each direction)
 - [x] Chebyshev
 
 ##### N-Dimensions, Scattered Points
@@ -52,3 +51,4 @@ If you need other/advanced applications, check out:
 2. [Dierckx.jl](https://github.com/kbarbary/Dierckx.jl)
 3. [GridInterpolations.jl](https://github.com/sisl/GridInterpolations.jl)
 4. [ApproXD.jl](https://github.com/floswald/ApproXD.jl)
+5. [FastChebInterp.jl](https://github.com/stevengj/FastChebInterp.jl)

@@ -87,7 +87,7 @@ end
 #-------------------------------------------------------------------------------
 # one-dimensional interpolation
 
-struct ChebyshevInterpolator{N,T} <: OneDimensionalInterpolator
+struct ChebyshevInterpolator{N,T}
     #lowest value in range
     xa::T
     #highest value in range
@@ -161,7 +161,7 @@ end
 #-------------------------------------------------------------------------------
 # bichebyshev interpolation, a little trickier now!
 
-struct BichebyshevInterpolator{M,N,U} <: TwoDimensionalInterpolator
+struct BichebyshevInterpolator{M,N,U}
     #lowest value on axis 1
     xa::U
     #highest value on axis 1

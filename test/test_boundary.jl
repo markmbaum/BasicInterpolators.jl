@@ -2,8 +2,7 @@ T1 = [LinearInterpolator,
       CubicInterpolator,
       CubicSplineInterpolator]
 T2 = [BilinearInterpolator,
-      BicubicInterpolator,
-      BicubicSplineInterpolator]
+      BicubicInterpolator]
 
 for T in T1
     ϕ = T(x->1.0, -1, 1, 5)
