@@ -140,4 +140,7 @@ function (ϕ::CubicSplineInterpolator)(x)
     @inbounds ϕ.coef[i][1] + ϕ.coef[i][2]*ξ + ϕ.coef[i][3]*ξ^2 + ϕ.coef[i][4]*ξ^3
 end
 
-Base.getindex(Φ::CubicSplineInterpolator, i, j) = Φ.G.Z[i,j]
+Base.getindex(ϕ::CubicSplineInterpolator, i) = ϕ.r.y[i]
+function Base.copy(ϕ::CubicSplineInterpolator)
+    CubicSplineInterpolator(ϕ.r, ϕ.coef, ϕ.boundaries, Ref(1))
+end

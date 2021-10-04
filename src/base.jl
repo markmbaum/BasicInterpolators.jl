@@ -3,8 +3,13 @@ export findcell, NoBoundaries, WeakBoundaries, StrictBoundaries
 #-------------------------------------------------------------------------------
 # abstract classes for interpolators
 
-abstract type OneDimensionalInterpolator end
-abstract type TwoDimensionalInterpolator end
+export BasicInterpolator
+export OneDimensionalInterpolator
+export TwoDimensionalInterpolator
+
+abstract type BasicInterpolator end
+abstract type OneDimensionalInterpolator <: BasicInterpolator end
+abstract type TwoDimensionalInterpolator <: BasicInterpolator end
 
 #-------------------------------------------------------------------------------
 # cell finding stuff
@@ -32,7 +37,7 @@ function findcell(q, V, n::Int64)::Int64
     return L
 end
 
-incell(x, X, i::Int64)::Bool = @inbounds (x >= X[i] && x <= X[i+1])
+incell(x, X, i::Int64)::Bool = @inbounds ((x >= X[i]) && (x <= X[i+1]))
 
 function findcell(x, ϕ::OneDimensionalInterpolator)::Int64
     #check previous index used

@@ -72,16 +72,10 @@ function chebyrecurrance(ξ::U, L::Int) where {U}
 end
 
 #-------------------------------------------------------------------------------
-# cache for inverted cheby matrices needed for interpolator setup
+# caching function for inverted cheby matrices, needed for interpolator setup
 
-#a cache for the inverted matrices needed for Bicheby setup
-const invchebmat = Dict{Int64, Matrix{Float64}}()
-
-function invertedchebymatrix(n::Int64)::Matrix{Float64}
-    if !haskey(invchebmat, n)
-        invchebmat[n] = inv(chebymatrix(n))
-    end
-    return invchebmat[n]
+@memoize function invertedchebymatrix(n::Int64)::Matrix{Float64}
+    inv(chebymatrix(n))
 end
 
 #-------------------------------------------------------------------------------
@@ -171,7 +165,7 @@ struct BichebyshevInterpolator{M,N,U}
     #highest value on axis 2
     yb::U
     #matrix and vectors for doing the interpolation
-    A::Matrix{U} # size ny x nx
+    A::Matrix{U} # size (ny by nx) or (M by N)
     a::Vector{U} # length ny for cosine expansion in θy
     b::Vector{U} # length nx for cosine expansion in θx
     c::Vector{U} # length ny for doing M*b in place
@@ -234,43 +228,58 @@ function BichebyshevInterpolator(f::F, xa, xb, nx::Int, ya, yb, ny::Int) where {
     BichebyshevInterpolator(X[:,1], Y[1,:], Z)
 end
 
-function (Φ::BichebyshevInterpolator{M,N,U})(x::U, y::U) where {M,N,U}
+#=====
+This is the fast implementation. It's executed when the types of the
+input coordinates match the type of the stored coefficients in the
+interpolator. When the types match, the Chebyshev expansions can be
+evaluated in-place, using vectors pre-allocated in the interpolator.
+See the a, b, and c fields of the struct. This method also guarantees
+that the interpolator type and the coordinate types are <: AbstractFloat,
+making the low-level linear algebra functions safe. Without such a
+guarantee, there can be issues with, for example, the dual numbers in
+FowardDiff routines.
+=====#
+function (Φ::BichebyshevInterpolator{M,N,U})(x::U, y::U) where {M,N,U<:AbstractFloat}
     #always enforce boundaries for Chebyshev
     Φ.boundaries(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb)
     #evaluate Chebyshev polys at the coordinates recursively and in-place
-    chebyrecurrance!(Φ.a, x2ξ(y, Φ.ya, Φ.yb), M)
-    chebyrecurrance!(Φ.b, x2ξ(x, Φ.xa, Φ.xb), N)
+    ξy = x2ξ(y, Φ.ya, Φ.yb)
+    chebyrecurrance!(Φ.a, ξy, M)
+    ξx = x2ξ(x, Φ.xa, Φ.xb)
+    chebyrecurrance!(Φ.b, ξx, N)
     #perform M*b, which interpolates along the first axis, also in-place
-    mul!(Φ.c, Φ.A, Φ.b)    
+    mul!(Φ.c, Φ.A, Φ.b)
     #then a'*c interpolates along the second axis
     return dot(Φ.a, Φ.c)
 end
 
+#=====
+This is the slow, buttype-flexible, implementation. It's
+executed whenever the type of the interpolator's coefficients or
+the coordinate types don't match OR are not AbstractFloats. The
+price of this flexibility is allocations for the expansions and
+loss of the low-level linear algebra routines 😭.
+=====#
 function (Φ::BichebyshevInterpolator{M,N,U})(x, y) where {M,N,U}
     #always enforce boundaries for Chebyshev
     Φ.boundaries(x, Φ.xa, Φ.xb, y, Φ.ya, Φ.yb)
     #coordinates in ξ space
-    ξx = x2ξ(x, Φ.xa, Φ.xb)
-    ξy = x2ξ(y, Φ.ya, Φ.yb)
-    ξx, ξy = promote(ξx, ξy)
+    ξx, ξy = promote(x2ξ(x, Φ.xa, Φ.xb), x2ξ(y, Φ.ya, Φ.yb))
     #allocating expansion in the x direction
     b = chebyrecurrance(ξx, N)
-    #allocate a and put A*b in it
-    a = Vector{typeof(ξy)}(undef,M)
-    mul!(a, Φ.A, b)
+    c = Φ.A * b
     #then perform the y-axis expansion and dot product simulataneously    
     Tₖ₋₂ = one(ξy)
     Tₖ₋₁ = ξy
-    @inbounds z = a[1] + ξy*a[2]
+    @inbounds z = c[1] + ξy*c[2]
     for i = 3:M
         #compute next value
         Tₖ = 2ξy*Tₖ₋₁ - Tₖ₋₂
         #update running dot product
-        @inbounds z += a[i]*Tₖ
+        @inbounds z += c[i]*Tₖ
         #swaps
         Tₖ₋₂ = Tₖ₋₁
         Tₖ₋₁ = Tₖ
     end
     return z
-
 end

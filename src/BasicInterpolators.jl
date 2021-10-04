@@ -1,11 +1,8 @@
 module BasicInterpolators
 
-#for previous cell indices
 using Base: RefValue
-#to get value arrays of interpolators
-import Base.values
-#for in-place matrix multiplication in chebyshev interpolators
 using LinearAlgebra: mul!, dot
+using Memoize
 
 include("base.jl")
 include("polynomial.jl")

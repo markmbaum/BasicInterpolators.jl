@@ -14,3 +14,10 @@ xb = 3.1
 xx = LinRange(xa, xb, 100)
 yy = cubichermite.(xx, xa, xb, f(xa), f(xb), df(xa), df(xb))
 @test maximum(@. abs(yy - f.(xx)) ) < 1e-6
+
+#test the type-flexible Bichebyshev functor
+P = BichebyshevInterpolator((x,y)->sin(x)*cos(x), -π, π, 14, -π, π, 16)
+for i in 1:10
+    a, b = 2π*rand(2) .- π
+    @test P(a,b) ≈ P(BigFloat(a),b)
+end

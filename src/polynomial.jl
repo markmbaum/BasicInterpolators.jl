@@ -151,9 +151,13 @@ function (ϕ::LinearInterpolator)(x)
 end
 
 Base.getindex(ϕ::LinearInterpolator, i) = ϕ.r.y[i]
-
+Base.firstindex(::LinearInterpolator) = 1
+Base.lastindex(ϕ::LinearInterpolator) = ϕ.r.n
 function Base.setindex!(ϕ::LinearInterpolator, v, i)
     ϕ.r.y[i] = v
+end
+function Base.copy(ϕ::LinearInterpolator)
+    LinearInterpolator(ϕ.r, ϕ.boundaries, Ref(1))
 end
 
 #-------------------------------------------------------------------------------
@@ -202,9 +206,13 @@ function (ϕ::CubicInterpolator)(x)
 end
 
 Base.getindex(ϕ::CubicInterpolator, i) = ϕ.r.y[i]
-
+Base.firstindex(::CubicInterpolator) = 1
+Base.lastindex(ϕ::CubicInterpolator) = ϕ.r.n
 function Base.setindex!(ϕ::CubicInterpolator, v, i)
     ϕ.r.y[i] = v
+end
+function Base.copy(ϕ::CubicInterpolator)
+    CubicInterpolator(ϕ.r, ϕ.boundaries, Ref(1))
 end
 
 #-------------------------------------------------------------------------------
@@ -259,9 +267,11 @@ function (Φ::BilinearInterpolator)(x, y)
 end
 
 Base.getindex(Φ::BilinearInterpolator, i, j) = Φ.G.Z[i,j]
-
 function Base.setindex!(Φ::BilinearInterpolator, v, i, j)
     Φ.G.Z[i,j] = v
+end
+function Base.copy(Φ::BilinearInterpolator)
+    BilinearInterpolator(Φ.G, Φ.boundaries, Ref(1), Ref(1))
 end
 
 #-------------------------------------------------------------------------------
@@ -333,7 +343,9 @@ function (Φ::BicubicInterpolator)(x, y)
 end
 
 Base.getindex(Φ::BicubicInterpolator, i, j) = Φ.G.Z[i,j]
-
 function Base.setindex!(Φ::BicubicInterpolator, v, i, j)
     Φ.G.Z[i,j] = v
+end
+function Base.copy(Φ::BicubicInterpolator)
+    BicubicInterpolator(Φ.G, Φ.boundaries, Ref(1), Ref(1))
 end
