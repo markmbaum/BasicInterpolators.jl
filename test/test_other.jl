@@ -21,3 +21,11 @@ for i in 1:10
     a, b = 2π*rand(2) .- π
     @test P(a,b) ≈ P(BigFloat(a),b)
 end
+
+#test cheby derivative
+p = ChebyshevInterpolator(x->sin(x^2), -2π, 2π, 128)
+d = chebyderiv(p)
+for i = 1:10
+    a = 4π*rand() - 2π
+    @test d(a) - 2*a*cos(a^2) < 1e-6
+end

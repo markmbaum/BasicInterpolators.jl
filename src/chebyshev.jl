@@ -1,4 +1,5 @@
-export chebygrid, ChebyshevInterpolator, BichebyshevInterpolator
+export chebygrid, chebycoef, cheby, chebyderiv
+export ChebyshevInterpolator, BichebyshevInterpolator
 
 ξ2x(ξ, a, b) = (ξ + 1)*((b - a)/2) + a
 
@@ -35,15 +36,12 @@ function ischebygrid(x)::Bool
     all(x2ξ.(x, minimum(x), maximum(x)) .- chebygrid(length(x)) .< 1e-6)
 end
 
-#could be slower than the recurrance
-cheby(ξ, k::Int) = cos(k*acos(ξ))
-
 function chebymatrix(n::Int)
     @assert n > 1 "can't construct cheby matrix smaller than 2 x 2"
     A = zeros(n,n)
     ξ = chebygrid(n)
     for j ∈ 1:n, k ∈ 1:n
-        @inbounds A[j,k] = cheby(ξ[j], k-1)
+        @inbounds A[j,k] = cos((k-1)*acos(ξ[j]))
     end
     return A
 end
@@ -71,12 +69,76 @@ function chebyrecurrance(ξ::U, L::Int) where {U}
     return T
 end
 
+"""
+    chebycoef(y)
+
+Compute the Chebyshev expansion coefficients for a set of points `y`, which are assumed to be located on the Chebyshev points for some interval.
+"""
+function chebycoef(y)
+    n = length(y)
+    @assert n > 1 "must have at least 2 points to form chebyshev coefficients"
+    invertedchebymatrix(n)*y
+end
+
+"""
+    cheby(coef, x, xa, xb)
+
+Evaluates the Chebyshev expansion represented by the coefficients in `coef` and defined on the interval [`xa`,`xb`] at the point `x`.
+"""
+function cheby(coef, x, xa, xb)
+    N = length(coef)
+    @assert xa <= x <= xb "x must be inside [xa,xb]"
+    #get coordinate in ξ space
+    ξ = x2ξ(x, xa, xb)
+    #first two elements of cheby recursion
+    Tₖ₋₂ = one(ξ)
+    Tₖ₋₁ = ξ
+    #first two terms of dot product
+    @inbounds y = Tₖ₋₂*coef[1] + Tₖ₋₁*coef[2]
+    #cheby recursion and rest of terms in dot product, all at once
+    for k = 3:N
+        #next value in recursion
+        Tₖ = 2*ξ*Tₖ₋₁ - Tₖ₋₂
+        #next term in dot product
+        @inbounds y += Tₖ*coef[k]
+        #swaps
+        Tₖ₋₂ = Tₖ₋₁
+        Tₖ₋₁ = Tₖ
+    end
+    return y
+end
+
+"""
+    chebyderiv(coef, xa, xb)
+
+Generates the expansion coefficents for the derivative of a preexisting Chebyshev expansion defined on the interval [`xa`,`xb`].
+"""
+function chebyderiv(coef, xa, xb)
+    n = length(coef)
+    T = eltype(coef)
+    @assert xa < xb "xa must be less than xb"
+    #length 1 case is a trivial zero slope
+    n == 1 && return zeros(T, 1)
+    #start the array and check for length 2 case
+    d = zeros(T, n-1)
+    d[n-1] = 2*(n-2)*coef[n]
+    n == 2 && return d
+    #recurrance for all the rest
+    d[n-2] = 2*(n-3)*coef[n-1]
+    @inbounds for k ∈ n-2:-1:2
+        d[k-1] = d[k+1] + 2*(k-1)*coef[k]
+    end
+    #interval width factor
+    d .*= 2/(xb - xa)
+    #extra DC scaling
+    d[1] /= 2
+    return d
+end
+
 #-------------------------------------------------------------------------------
 # caching function for inverted cheby matrices, needed for interpolator setup
 
-@memoize function invertedchebymatrix(n::Int64)::Matrix{Float64}
-    inv(chebymatrix(n))
-end
+@memoize invertedchebymatrix(n::Int64)::Matrix{Float64} = inv(chebymatrix(n))
 
 #-------------------------------------------------------------------------------
 # one-dimensional interpolation
@@ -90,6 +152,10 @@ struct ChebyshevInterpolator{N,T}
     a::NTuple{N,T}
     #must always have strict boundaries
     boundaries::StrictBoundaries
+end
+
+function Base.show(io::IO, ϕ::ChebyshevInterpolator)
+    print(io, "$(typeof(ϕ)) ∈ [$(ϕ.xa), $(ϕ.xb)]")
 end
 
 """
@@ -106,13 +172,10 @@ function ChebyshevInterpolator(x, y)
     rangecheck(x, y, 3)
     #demand that the input points have chebyshev spacing
     @assert ischebygrid(x) "points must be on a chebyshev grid"
-    #get the inverted cheby matrix, from cache or fresh
-    N = length(x)
-    A = invertedchebymatrix(N)
     #generate expansion coefficients
-    a = Tuple(A*y)
+    a = Tuple(chebycoef(y))
     #construct
-    ChebyshevInterpolator{N,T}(minimum(x), maximum(x), a, StrictBoundaries())
+    ChebyshevInterpolator(minimum(x), maximum(x), a, StrictBoundaries())
 end
 
 """
@@ -132,24 +195,20 @@ end
 function (ϕ::ChebyshevInterpolator{N,U})(x) where {N,U}
     #always enforce boundaries
     ϕ.boundaries(x, ϕ.xa, ϕ.xb)
-    #get coordiante in ξ space
-    ξ = x2ξ(x, ϕ.xa, ϕ.xb)
-    #first two elements of cheby recursion
-    Tₖ₋₂ = one(ξ)
-    Tₖ₋₁ = ξ
-    #first two terms of dot product
-    @inbounds y = Tₖ₋₂*ϕ.a[1] + Tₖ₋₁*ϕ.a[2]
-    #cheby recursion and rest of terms in dot product, all at once
-    for k = 3:N
-        #next value in recursion
-        Tₖ = 2*ξ*Tₖ₋₁ - Tₖ₋₂
-        #next term in dot product
-        @inbounds y += Tₖ*ϕ.a[k]
-        #swaps
-        Tₖ₋₂ = Tₖ₋₁
-        Tₖ₋₁ = Tₖ
-    end
-    return y
+    #evaluate the expansion
+    return cheby(ϕ.a, x, ϕ.xa, ϕ.xb)
+end
+
+"""
+    chebyderiv(ϕ::ChebyshevInterpolator)
+
+Construct a ChebyshevInterpolator representing the derivative of a preexisting interpolator.
+"""
+function chebyderiv(ϕ::ChebyshevInterpolator)
+    #derivative expansion's coefficients
+    coef = Tuple(chebyderiv(ϕ.a, ϕ.xa, ϕ.xb))
+    #new interpolator
+    ChebyshevInterpolator(ϕ.xa, ϕ.xb, coef, StrictBoundaries())
 end
 
 #-------------------------------------------------------------------------------
@@ -171,6 +230,10 @@ struct BichebyshevInterpolator{M,N,U}
     c::Vector{U} # length ny for doing M*b in place
     #must always use strict boundaries
     boundaries::StrictBoundaries
+end
+
+function Base.show(io::IO, ϕ::BichebyshevInterpolator)
+    print(io, "$(typeof(ϕ)) ∈ [$(ϕ.xa), $(ϕ.xb)], [$(ϕ.ya), $(ϕ.yb)]")
 end
 
 """
@@ -254,7 +317,7 @@ function (Φ::BichebyshevInterpolator{M,N,U})(x::U, y::U) where {M,N,U<:Abstract
 end
 
 #=====
-This is the slow, buttype-flexible, implementation. It's
+This is the slow, but type-flexible, implementation. It's
 executed whenever the type of the interpolator's coefficients or
 the coordinate types don't match OR are not AbstractFloats. The
 price of this flexibility is allocations for the expansions and

@@ -11,6 +11,14 @@ abstract type BasicInterpolator end
 abstract type OneDimensionalInterpolator <: BasicInterpolator end
 abstract type TwoDimensionalInterpolator <: BasicInterpolator end
 
+function Base.show(io::IO, ϕ::P) where {P<:OneDimensionalInterpolator}
+    print(io, "$P ∈ [$(ϕ.r.xa), $(ϕ.r.xb)]")
+end
+
+function Base.show(io::IO, ϕ::P) where {P<:TwoDimensionalInterpolator}
+    print(io, "$P ∈ [$(ϕ.G.xa), $(ϕ.G.xb)], [$(ϕ.G.ya), $(ϕ.G.yb)]")
+end
+
 #-------------------------------------------------------------------------------
 # cell finding stuff
 
