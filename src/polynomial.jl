@@ -1,6 +1,19 @@
-export quadratic, cubic, neville, vandermonde, vandermonde!, cubichermite,
+export linear, quadratic, quaddiff, cubic,
+       neville, vandermonde, vandermonde!, cubichermite,
        LinearInterpolator, CubicInterpolator,
        BilinearInterpolator, BicubicInterpolator
+
+
+"""
+    linear(x, xₚ, yₚ)
+
+Perform simple linear interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`. `xₚ` and `yₚ` must both contain two points.
+"""
+function linear(x, xₚ, yₚ)
+    @inbounds x₁, x₂ = xₚ[1], xₚ[2]
+    @inbounds y₁, y₂ = yₚ[1], yₚ[2]
+    return y₁ + (x - x₁)*(y₂ - y₁)/(x₂ - x₁)
+end
 
 """
     quadratic(x, xₚ, yₚ)

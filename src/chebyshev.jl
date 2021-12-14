@@ -1,4 +1,4 @@
-export chebygrid, chebycoef, cheby, chebyderiv
+export chebygrid, ischebygrid, chebycoef, cheby, chebyderiv
 export ChebyshevInterpolator, BichebyshevInterpolator
 
 ξ2x(ξ, a, b) = (ξ + 1)*((b - a)/2) + a
@@ -12,7 +12,7 @@ x2θ(x, a, b) = acos(x2ξ(x, a, b))
 
 Create an array of `n` chebyshev nodes in [-1,1]
 """
-chebygrid(n::Int) = cos.(π*(n-1:-1:0)/(n-1))
+@memoize chebygrid(n::Int) = cos.(π*(n-1:-1:0)/(n-1))
 
 """
     chebygrid(xa, xb, n)
@@ -33,10 +33,18 @@ function chebygrid(xa, xb, nx::Int, ya, yb, ny::Int)
 end
 
 function ischebygrid(x)::Bool
-    all(x2ξ.(x, minimum(x), maximum(x)) .- chebygrid(length(x)) .< 1e-6)
+    n = length(x)
+    c = chebygrid(n)
+    xa, xb = minimum(x), maximum(x)
+    @inbounds for i ∈ eachindex(x)
+        ξ = x2ξ(x[i], xa, xb)
+        r = abs((ξ - c[i])/c[i]) #relative difference
+        r > 1e-3 && return false 
+    end
+    return true
 end
 
-function chebymatrix(n::Int)
+@memoize function chebymatrix(n::Int)
     @assert n > 1 "can't construct cheby matrix smaller than 2 x 2"
     A = zeros(n,n)
     ξ = chebygrid(n)
@@ -77,7 +85,8 @@ Compute the Chebyshev expansion coefficients for a set of points `y`, which are 
 function chebycoef(y)
     n = length(y)
     @assert n > 1 "must have at least 2 points to form chebyshev coefficients"
-    invertedchebymatrix(n)*y
+    Aᴵ = invertedchebymatrix(n)
+    return Aᴵ*y
 end
 
 """

@@ -1,5 +1,3 @@
-export findcell, NoBoundaries, WeakBoundaries, StrictBoundaries
-
 #-------------------------------------------------------------------------------
 # abstract classes for interpolators
 
@@ -21,6 +19,8 @@ end
 
 #-------------------------------------------------------------------------------
 # cell finding stuff
+
+export findcell
 
 """
     findcell(q, V, n)
@@ -81,6 +81,8 @@ end
 
 #-------------------------------------------------------------------------------
 # types for handling boundaries
+
+export AbstractBoundaries, NoBoundaries, WeakBoundaries, StrictBoundaries
 
 upperbounderror(x, xb, axis::String) = error("Interpolation location $x outside upper interpolation limit $xb on the $axis axis")
 
