@@ -38,8 +38,7 @@ function ischebygrid(x)::Bool
     xa, xb = minimum(x), maximum(x)
     @inbounds for i ∈ eachindex(x)
         ξ = x2ξ(x[i], xa, xb)
-        r = abs((ξ - c[i])/c[i]) #relative difference
-        r > 1e-3 && return false 
+        !isapprox(ξ, c[i]) && return false 
     end
     return true
 end
