@@ -1,6 +1,7 @@
 F(x) = sin(x[1])*cos(x[2])
 npts = 1000
-X = 2π*rand(npts, 2) .- π
+rng = MersenneTwister(1)
+X = 2π*rand(rng, npts, 2) .- π
 y = [F(X[i,:]) for i = 1:npts]
 
 P = ShepardInterpolator(X, y)

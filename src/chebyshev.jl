@@ -38,7 +38,8 @@ function ischebygrid(x)::Bool
     xa, xb = minimum(x), maximum(x)
     @inbounds for i ∈ eachindex(x)
         ξ = x2ξ(x[i], xa, xb)
-        !isapprox(ξ, c[i]) && return false 
+        #shift from [-1,1] to [1,3] to avoid issues comparing to zero
+        !isapprox(ξ+2, c[i]+2) && return false 
     end
     return true
 end
