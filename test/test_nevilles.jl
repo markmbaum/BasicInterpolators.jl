@@ -1,6 +1,7 @@
 function neville_error(n::Int, F::Function)
     #random polynomial coefficents
-    a = rand(n)
+    rng = MersenneTwister(n)
+    a = rand(rng, n)
     #the polynomial
     p(x) = sum(a[i]*x^(i-1) for i=1:n)
     #samples

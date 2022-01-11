@@ -1,5 +1,5 @@
-function vandermonde_error(n, seed)
-    rng = MersenneTwister(seed)
+function vandermonde_error(n)
+    rng = MersenneTwister(n)
     a = rand(rng, n)
     x = rand(rng, n)
     y = zeros(rng, n)
@@ -11,5 +11,5 @@ function vandermonde_error(n, seed)
 end
 
 for n = 1:5
-    @test vandermonde_error(n, i) < 0.01
+    @test vandermonde_error(n) < 0.01
 end

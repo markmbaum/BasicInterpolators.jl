@@ -1,5 +1,6 @@
 #make sure the clamped spline is working
-x = 2*π*sort(rand(100)) .- 3
+rng = MersenneTwister(1)
+x = 2*π*sort(rand(rng, 100)) .- 3
 y = sin.(x)
 ϕ = CubicSplineInterpolator(x, y, cos(x[1]), cos(x[end]))
 xx = LinRange(minimum(x), maximum(x), 1000)
