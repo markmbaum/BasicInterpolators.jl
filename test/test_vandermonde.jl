@@ -2,7 +2,7 @@ function vandermonde_error(n)
     rng = MersenneTwister(n)
     a = rand(rng, n)
     x = rand(rng, n)
-    y = zeros(rng, n)
+    y = zeros(n)
     for i = 1:n
         y[i] = sum(ntuple(j->a[j]*x[i]^(j-1), n))
     end
