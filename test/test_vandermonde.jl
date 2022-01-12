@@ -10,6 +10,6 @@ function vandermonde_error(n)
     return maximum(abs.(c - a))
 end
 
-for n = 1:5
+for n = 2:5
     @test vandermonde_error(n) < 0.01
 end
