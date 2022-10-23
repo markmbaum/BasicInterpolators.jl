@@ -1,6 +1,5 @@
 module BasicInterpolators
 
-using Base: RefValue
 using LinearAlgebra: mul!, dot
 using Memoize
 

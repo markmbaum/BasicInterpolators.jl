@@ -5,9 +5,11 @@ export CubicSplineInterpolator, BicubicSplineInterpolator
 
 struct CubicSplineInterpolator{T,B} <: OneDimensionalInterpolator
     r::InterpolatorRange{T}
-    coef::Vector{NTuple{4,T}}
+    a::Vector{T}
+    b::Vector{T}
+    c::Vector{T}
+    d::Vector{T}
     boundaries::B
-    i::RefValue{Int64} #previous cell index
 end
 
 #-------------------------------------------------------------------------------
@@ -51,12 +53,12 @@ function CubicSplineInterpolator(x, y, boundaries::AbstractBoundaries=StrictBoun
     a = a[1:end-1]
     c = c[1:end-1]
     #static arrays
-    coef = Vector{NTuple{4,T}}(undef,n-1)
-    for i = 1:n-1
-        coef[i] = (a[i], b[i], c[i], d[i])
-    end
+    #coef = Vector{NTuple{4,T}}(undef,n-1)
+    #for i = 1:n-1
+    #    coef[i] = (a[i], b[i], c[i], d[i])
+    #end
     #construct the object
-    CubicSplineInterpolator(r, coef, boundaries, Ref(1))
+    CubicSplineInterpolator(r, a, b, c, d, boundaries)
 end
 
 """
@@ -108,12 +110,12 @@ function CubicSplineInterpolator(x,
     a = a[1:end-1]
     c = c[1:end-1]
     #static arrays
-    coef = Vector{NTuple{4,T}}(undef,n-1)
-    for i = 1:n-1
-        coef[i] = (a[i], b[i], c[i], d[i])
-    end
+    #coef = Vector{NTuple{4,T}}(undef,n-1)
+    #for i = 1:n-1
+    #    coef[i] = (a[i], b[i], c[i], d[i])
+    #end
     #construct the object
-    CubicSplineInterpolator(r, coef, boundaries, Ref(1))
+    CubicSplineInterpolator(r, a, b, c, d, boundaries)
 end
 
 """
@@ -137,10 +139,10 @@ function (ϕ::CubicSplineInterpolator)(x)
     #offset from the nearest lower point
     @inbounds ξ = x - ϕ.r.x[i]
     #evaluate polynomial
-    @inbounds ϕ.coef[i][1] + ϕ.coef[i][2]*ξ + ϕ.coef[i][3]*ξ^2 + ϕ.coef[i][4]*ξ^3
+    @inbounds ϕ.a[i] + ϕ.b[i]*ξ + ϕ.c[i]*ξ^2 + ϕ.d[i]*ξ^3
 end
 
 Base.getindex(ϕ::CubicSplineInterpolator, i) = ϕ.r.y[i]
 function Base.copy(ϕ::CubicSplineInterpolator)
-    CubicSplineInterpolator(ϕ.r, ϕ.coef, ϕ.boundaries, Ref(1))
+    CubicSplineInterpolator(ϕ.r, ϕ.coef, ϕ.boundaries)
 end

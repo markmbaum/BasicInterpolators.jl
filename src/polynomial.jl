@@ -130,7 +130,6 @@ end
 struct LinearInterpolator{T,B} <: OneDimensionalInterpolator
     r::InterpolatorRange{T}
     boundaries::B
-    i::RefValue{Int64} #previous cell index
 end
 
 """
@@ -139,7 +138,7 @@ end
 Construct a `LinearInterpolator` for the points defined by coordinates `x` and values `y`
 """
 function LinearInterpolator(x, y, boundaries::AbstractBoundaries=StrictBoundaries())
-    LinearInterpolator(InterpolatorRange(x, y), boundaries, Ref(1))
+    LinearInterpolator(InterpolatorRange(x, y), boundaries)
 end
 
 """
@@ -170,7 +169,7 @@ function Base.setindex!(ϕ::LinearInterpolator, v, i)
     ϕ.r.y[i] = v
 end
 function Base.copy(ϕ::LinearInterpolator)
-    LinearInterpolator(ϕ.r, ϕ.boundaries, Ref(1))
+    LinearInterpolator(ϕ.r, ϕ.boundaries)
 end
 
 #-------------------------------------------------------------------------------
@@ -179,7 +178,6 @@ end
 struct CubicInterpolator{T,B} <: OneDimensionalInterpolator
     r::InterpolatorRange{T}
     boundaries::B
-    i::RefValue{Int64} #previous cell index
 end
 
 """
@@ -189,7 +187,7 @@ Construct a `CubicInterpolator` for the points defined by coordinates `x` and va
 """
 function CubicInterpolator(x, y, boundaries::AbstractBoundaries=StrictBoundaries())
     @assert length(x) > 3 "can't do cubic interpolation with < 4 points"
-    CubicInterpolator(InterpolatorRange(x, y), boundaries, Ref(1))
+    CubicInterpolator(InterpolatorRange(x, y), boundaries)
 end
 
 """
@@ -225,7 +223,7 @@ function Base.setindex!(ϕ::CubicInterpolator, v, i)
     ϕ.r.y[i] = v
 end
 function Base.copy(ϕ::CubicInterpolator)
-    CubicInterpolator(ϕ.r, ϕ.boundaries, Ref(1))
+    CubicInterpolator(ϕ.r, ϕ.boundaries)
 end
 
 #-------------------------------------------------------------------------------
@@ -234,8 +232,6 @@ end
 struct BilinearInterpolator{T,B} <: TwoDimensionalInterpolator
     G::InterpolatorGrid{T}
     boundaries::B
-    i::RefValue{Int64} #previous cell index
-    j::RefValue{Int64} #previous cell index
 end
 
 """
@@ -244,7 +240,7 @@ end
 Construct a `BilinearInterpolator` for the grid of points points defined by coordinates `x`,`y` and values `Z`.
 """
 function BilinearInterpolator(x, y, Z, boundaries::AbstractBoundaries=StrictBoundaries())
-    BilinearInterpolator(InterpolatorGrid(x, y, Z), boundaries, Ref(1), Ref(1))
+    BilinearInterpolator(InterpolatorGrid(x, y, Z), boundaries)
 end
 
 """
@@ -284,7 +280,7 @@ function Base.setindex!(Φ::BilinearInterpolator, v, i, j)
     Φ.G.Z[i,j] = v
 end
 function Base.copy(Φ::BilinearInterpolator)
-    BilinearInterpolator(Φ.G, Φ.boundaries, Ref(1), Ref(1))
+    BilinearInterpolator(Φ.G, Φ.boundaries)
 end
 
 #-------------------------------------------------------------------------------
@@ -293,8 +289,6 @@ end
 struct BicubicInterpolator{T,B} <: TwoDimensionalInterpolator
     G::InterpolatorGrid{T}
     boundaries::B
-    i::RefValue{Int64} #previous cell index
-    j::RefValue{Int64} #previous cell index
 end
 
 """
@@ -305,7 +299,7 @@ Construct a `BicubicInterpolator` for the grid of points points defined by coord
 function BicubicInterpolator(x, y, Z, boundaries::AbstractBoundaries=StrictBoundaries())
     #insist on at least 4 points in each dimension
     @assert (length(x) > 3) & (length(y) > 3) "bicubic interpolation requires at least 4 points in each dimension"
-    BicubicInterpolator(InterpolatorGrid(x, y, Z), boundaries, Ref(1), Ref(1))
+    BicubicInterpolator(InterpolatorGrid(x, y, Z), boundaries)
 end
 
 """
@@ -360,5 +354,5 @@ function Base.setindex!(Φ::BicubicInterpolator, v, i, j)
     Φ.G.Z[i,j] = v
 end
 function Base.copy(Φ::BicubicInterpolator)
-    BicubicInterpolator(Φ.G, Φ.boundaries, Ref(1), Ref(1))
+    BicubicInterpolator(Φ.G, Φ.boundaries)
 end
