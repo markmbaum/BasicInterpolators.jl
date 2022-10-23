@@ -12,7 +12,10 @@ x2θ(x, a, b) = acos(x2ξ(x, a, b))
 
 Create an array of `n` chebyshev nodes in [-1,1]
 """
-@memoize chebygrid(n::Int) = cos.(π*(n-1:-1:0)/(n-1))
+@memoize function chebygrid(n::Int)
+    @assert n > 1 "can't form chebygrid with less than 2 points"
+    cos.(π*(n-1:-1:0)/(n-1))
+end
 
 """
     chebygrid(xa, xb, n)
