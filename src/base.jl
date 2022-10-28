@@ -207,7 +207,7 @@ end
 function gridcheck(x::AbstractVector, y::AbstractVector, Z::AbstractMatrix, minpts=2)
     @assert (length(x) >= minpts) & (length(y) >= minpts) "must have at least $minpts points in each dimension of interpolation grid"
     @assert size(Z) == (length(x), length(y)) "dimensions mismatched, size(Z) = $(size(Z)) but length(x) = $(length(x)) and length(y) = $(length(y))"
-    @assert (all(diff(x) .> 0.0) & all(diff(y) .>= 0.0)) "grid coordinates must be monotonically increasing without duplicates"
+    @assert (issorted(x) & issorted(y)) "grid coordinates must be monotonically increasing without duplicates"
 end
 
 function linstruct(I::Type, f::F,
