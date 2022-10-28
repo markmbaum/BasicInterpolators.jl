@@ -83,7 +83,7 @@ function (B::NoBoundaries)(x...) end
 """
     WeakBoundaries()
 
-Allows small overshoots at boundaries, but not large ones. Errors are only triggered when the interpolation coordinate is outside of a boundary and not close to it. At the lower boundar, for example, an error would be triggered when `(x < boundary) & !(x ≈ boundary)`.
+Allows small overshoots at boundaries, but not large ones. Errors are only triggered when the interpolation coordinate is outside of a boundary and not close to it. At the lower boundary, for example, an error would be triggered when `(x < boundary) & !(x ≈ boundary)`.
 """
 struct WeakBoundaries <: AbstractBoundaries end
 
