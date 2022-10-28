@@ -155,7 +155,7 @@ function rangecheck(x::AbstractVector, y::AbstractVector, minpts=2)
     nx, ny = length(x), length(y)
     @assert nx == ny "length of x ($nx) does not match length of y ($ny)"
     @assert nx >= minpts "must have at least $minpts points in the interpolation range"
-    @assert all(diff(x) .> 0.0) "grid points must be in strictly ascending order"
+    @assert issorted(x) "grid points must be in strictly ascending order"
 end
 
 function linstruct(I::Type, f::F, xa, xb, n::Int, boundaries::AbstractBoundaries) where {F}
