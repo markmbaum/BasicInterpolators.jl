@@ -1,6 +1,5 @@
 function vandermonde_error(n)
-    rng = MersenneTwister(n)
-    a = rand(rng, n)
+    a = collect(1:n)
     x = LinRange(-1, 1, n)
     y = zeros(n)
     for i = 1:n

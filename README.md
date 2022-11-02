@@ -1,6 +1,6 @@
 # BasicInterpolators.jl ![downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/BasicInterpolators)
 
-*Quick and easy interpolation methods for basic applications*
+*Interpolation methods with a simple interface*
 
 | Documentation | Status |
 | :-----------: | :----: |
