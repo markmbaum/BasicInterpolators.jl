@@ -10,6 +10,7 @@ export linear, quadratic, quaddiff, cubic,
 Perform simple linear interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`. `xₚ` and `yₚ` must both contain two points.
 """
 function linear(x, xₚ, yₚ)
+    @assert length(xₚ) == length(yₚ) == 2 "Two (2) points/coordinates are required for linear interpolation. For more than two points, use a [`LinearInterpolator`](@ref)."
     @inbounds x₁, x₂ = xₚ[1], xₚ[2]
     @inbounds y₁, y₂ = yₚ[1], yₚ[2]
     return y₁ + (x - x₁)*(y₂ - y₁)/(x₂ - x₁)
@@ -21,7 +22,7 @@ end
 Perform quadratic polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm. `xₚ` and `yₚ` must both contain three points.
 """
 function quadratic(x, xₚ, yₚ)
-    @assert length(xₚ) == length(yₚ) == 3 "need 3 points for quadratic interpolation"
+    @assert length(xₚ) == length(yₚ) == 3 "Three (3) points/coordinates are required for simple quadratic interpolation."
     #short names
     @inbounds x₁, x₂, x₃ = xₚ[1], xₚ[2], xₚ[3]
     @inbounds y₁, y₂, y₃ = yₚ[1], yₚ[2], yₚ[3]
@@ -38,7 +39,7 @@ end
 Perform cubic polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm. `xₚ` and `yₚ` must both contain four points.
 """ 
 function cubic(x, xₚ, yₚ)
-    @assert length(xₚ) == length(yₚ) == 4 "need 4 points for cubic interpolation"
+    @assert length(xₚ) == length(yₚ) == 4 "Four (4) points/coordinates are required for simple cubic interpolation/"
     #short names
     @inbounds x₁, x₂, x₃, x₄ = xₚ[1], xₚ[2], xₚ[3], xₚ[4]
     @inbounds y₁, y₂, y₃, y₄ = yₚ[1], yₚ[2], yₚ[3], yₚ[4]
@@ -59,7 +60,7 @@ end
 Perform polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm with as many points as are provided. `xₚ` and `yₚ` must have the same length. With only 3 or 4 points the [`quadratic`](@ref) and [`cubic`](@ref) functions will be considerably faster.
 """
 function neville(x, xₚ, yₚ)
-    @assert length(xₚ) == length(yₚ) "can't Neville with vectors of different lengths"
+    @assert length(xₚ) == length(yₚ) "Can't perform Neville's algorithm with coordinate vectors of different lengths. length(xₚ) = $(length(xₚ)) but length(yₚ) == $(length(yₚ))"
     n = length(xₚ)
     P = zeros(n, n)
     P[:,1] = yₚ

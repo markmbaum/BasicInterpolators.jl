@@ -30,3 +30,7 @@ for i = 1:10
     a = 4π*rand() - 2π
     @test d(a) - 2*a*cos(a^2) < 1e-6
 end
+
+#test linear interp function
+xₚ, yₚ = [0,1], [0,1]
+@test linear(0.5, xₚ, yₚ) ≈ 0.5
