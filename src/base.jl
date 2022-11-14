@@ -45,8 +45,6 @@ function findcell(q, V, n::Int64)::Int64
     return L
 end
 
-incell(x, X, i::Int64)::Bool = @inbounds ((x >= X[i]) && (x <= X[i+1]))
-
 findcell(x, ϕ::OneDimensionalInterpolator)::Int64 = findcell(x, ϕ.r.x, ϕ.r.n)
 
 function findcell(x, y, Φ::TwoDimensionalInterpolator)::NTuple{2,Int64}
@@ -87,16 +85,18 @@ Allows small overshoots at boundaries, but not large ones. Errors are only trigg
 """
 struct WeakBoundaries <: AbstractBoundaries end
 
-function (B::WeakBoundaries)(x, xa, xb)
+function (B::WeakBoundaries)(x, xa, xb)::Nothing
     ((x < xa) && !(x ≈ xa)) && lowerbounderror(x, xa, "first")
     ((x > xb) && !(x ≈ xb)) && upperbounderror(x, xb, "first")
+    nothing
 end
 
-function (B::WeakBoundaries)(x, xa, xb, y, ya, yb)
+function (B::WeakBoundaries)(x, xa, xb, y, ya, yb)::Nothing
     ((x < xa) && !(x ≈ xa)) && lowerbounderror(x, xa, "first")
     ((x > xb) && !(x ≈ xb)) && upperbounderror(x, xb, "first")
     ((y < ya) && !(y ≈ ya)) && lowerbounderror(y, ya, "second")
     ((y > yb) && !(y ≈ yb)) && upperbounderror(y, yb, "second")
+    nothing
 end
 
 #--------------------------------
@@ -108,16 +108,18 @@ Triggers errors whenever interpolation coordinates are outside of the boundaries
 """
 struct StrictBoundaries <: AbstractBoundaries end
 
-function (B::StrictBoundaries)(x, xa, xb)
+function (B::StrictBoundaries)(x, xa, xb)::Nothing
     (x < xa) && lowerbounderror(x, xa, "first")
     (x > xb) && upperbounderror(x, xb, "first")
+    nothing
 end
 
-function (B::StrictBoundaries)(x, xa, xb, y, ya, yb)
+function (B::StrictBoundaries)(x, xa, xb, y, ya, yb)::Nothing
     (x < xa) && lowerbounderror(x, xa, "first")
     (x > xb) && upperbounderror(x, xb, "first")
     (y < ya) && lowerbounderror(y, ya, "second")
     (y > yb) && upperbounderror(y, yb, "second")
+    nothing
 end
 
 #-------------------------------------------------------------------------------

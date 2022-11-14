@@ -99,12 +99,12 @@ function RBFInterpolator(X::AbstractMatrix,
         end
     end
     #solve for weights
-    w = Symmetric(A)\S.y
+    w = Symmetric(A) \ S.y
     #construct
     RBFInterpolator(S, rbf, convert(eltype(y), ϵ), w)
 end
 
-function RBF(Φ::RBFInterpolator, x)
+function eval_RBF(Φ::RBFInterpolator, x)
     checkdims(x, Φ.S.N)
     y = 0.0
     for i = 1:Φ.S.p
@@ -116,13 +116,9 @@ function RBF(Φ::RBFInterpolator, x)
     return y
 end
 
-function (Φ::RBFInterpolator)(x::Union{AbstractVector,Tuple})
-    RBF(Φ, x)
-end
+(Φ::RBFInterpolator)(x::Union{AbstractVector,Tuple}) = eval_RBF(Φ, x)
 
-function (Φ::RBFInterpolator)(x::Number...)
-    RBF(Φ, collect(Float64, x))
-end
+(Φ::RBFInterpolator)(x::Number...) = eval_RBF(Φ, collect(Float64, x))
 
 #-------------------------------------------------------------------------------
 
@@ -138,13 +134,11 @@ end
 
 Construct a `ShepardInterpolator` for an n-dimensional set of points with coordinates `X` and values `y`. `X` must be an p × N array, where p is the number of points and N is the number of dimensions. `y` must be a length p vector. The value of `a` defines the distance weighting function ``r^{-a}``.
 """
-function ShepardInterpolator(X::AbstractMatrix,
-                             y::AbstractVector,
-                             a::Real=3.0)
+function ShepardInterpolator(X::AbstractMatrix, y::AbstractVector, a::Real=3.0)
     ShepardInterpolator(ScatteredPoints(X, y), a)
 end
 
-function shepard(Φ::ShepardInterpolator, x)
+function eval_shepard(Φ::ShepardInterpolator, x)
     checkdims(x, Φ.S.N)
     n = 0.0
     d = 0.0
@@ -160,6 +154,6 @@ function shepard(Φ::ShepardInterpolator, x)
     return n/d
 end
 
-(Φ::ShepardInterpolator)(x::Union{AbstractVector,Tuple}) = shepard(Φ, x)
+(Φ::ShepardInterpolator)(x::Union{AbstractVector,Tuple}) = eval_shepard(Φ, x)
 
-(Φ::ShepardInterpolator)(x::Number...) = shepard(Φ, x)
+(Φ::ShepardInterpolator)(x::Number...) = eval_shepard(Φ, x)

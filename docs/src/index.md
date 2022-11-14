@@ -26,3 +26,4 @@ If you need more features/methods/dimensions, please look in other packages:
 3. [GridInterpolations.jl](https://github.com/sisl/GridInterpolations.jl)
 4. [ApproXD](https://github.com/floswald/ApproXD.jl)
 5. [FastChebInterp.jl](https://github.com/stevengj/FastChebInterp.jl)
+6. [ApproxFun.jl](https://github.com/JuliaApproximation/ApproxFun.jl)

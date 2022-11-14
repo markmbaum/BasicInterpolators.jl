@@ -109,12 +109,7 @@ function CubicSplineInterpolator(x,
     end
     a = a[1:end-1]
     c = c[1:end-1]
-    #static arrays
-    #coef = Vector{NTuple{4,T}}(undef,n-1)
-    #for i = 1:n-1
-    #    coef[i] = (a[i], b[i], c[i], d[i])
-    #end
-    #construct the object
+    
     CubicSplineInterpolator(r, a, b, c, d, boundaries)
 end
 
