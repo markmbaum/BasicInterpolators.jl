@@ -17,6 +17,26 @@ julia> ]add BasicInterpolators
 
 -----
 
+### Basic Usage
+
+```julia
+#some data to interpolate
+x = [-1, 0.5, 2, 3]
+y = [1, 3, -0.5, 0]
+
+#a linear interpolation struct
+p = LinearInterpolator(x, y)
+
+#interpolate at one point
+p(2.5)
+
+#interpolate at lots of points
+p.(LinRange(-1, 3, 100))
+
+```
+
+-----
+
 ### Interpolation Methods
 
 ##### One Dimension
