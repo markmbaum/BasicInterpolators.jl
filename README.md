@@ -52,3 +52,4 @@ If you need other/advanced applications, check out:
 3. [GridInterpolations.jl](https://github.com/sisl/GridInterpolations.jl)
 4. [ApproXD.jl](https://github.com/floswald/ApproXD.jl)
 5. [FastChebInterp.jl](https://github.com/stevengj/FastChebInterp.jl)
+6. [ApproxFun.jl](https://github.com/JuliaApproximation/ApproxFun.jl)
