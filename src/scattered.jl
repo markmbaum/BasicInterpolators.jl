@@ -85,7 +85,7 @@ Construct a radial basis function (RBF) interpolator for an n-dimensional set of
 """
 function RBFInterpolator(X::AbstractMatrix,
                          y::AbstractVector,
-                         ϵ,
+                         ϵ::Real=1,
                          rbf::F=multiquadratic) where {F}
     S = ScatteredPoints(X, y)
     #matrix of basis function evaluations
