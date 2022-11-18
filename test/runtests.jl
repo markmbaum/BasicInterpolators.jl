@@ -111,22 +111,4 @@ end
         @test maximum(@. abs(y - y_test)) < tol
     end
 
-    #n = 10_000
-    #X = 2*rand(n, 3) .- 1
-    #y = map(f, eachslice(X, dims=1))
-    #X_test = 2*rand(n, 3) .- 1
-    #y_test = map(f, eachslice(X_test, dims=1))
-    #P = ShepardInterpolator(X, y)
-    #y = map(P, eachslice(X_test, dims=1))
-    #@test maximum(@. abs(y - y_test)) < 0.8
-#
-    #n = 1_000
-    #X = 2*rand(n, 3) .- 1
-    #y = map(f, eachslice(X, dims=1))
-    #X_test = 2*rand(n, 3) .- 1
-    #y_test = map(f, eachslice(X_test, dims=1))
-    #P = RBFInterpolator(X, y, 1.0)
-    #y = map(P, eachslice(X_test, dims=1))
-    #@test maximum(@. abs(y - y_test)) < 1e-2
-
 end
