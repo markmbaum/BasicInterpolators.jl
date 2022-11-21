@@ -6,12 +6,36 @@
 | :-----------: | :----: |
 | [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://markmbaum.github.io/BasicInterpolators.jl/dev)  | [![Build Status](https://github.com/markmbaum/BasicInterpolators.jl/workflows/CI/badge.svg)](https://github.com/markmbaum/BasicInterpolators.jl/actions) [![codecov](https://codecov.io/gh/markmbaum/BasicInterpolators.jl/branch/main/graph/badge.svg?token=yRg33tFcL3)](https://codecov.io/gh/markmbaum/BasicInterpolators.jl)  |
 
-I consistently found the flagship(?) [`Interpolations.jl`](https://github.com/JuliaMath/Interpolations.jl) package annoying and difficult, so I made this one.
 
 Use Julia's package manager to install
 ```
 julia> ]add BasicInterpolators
 ```
+
+-----
+
+### Interpolation Methods
+
+##### One Dimension
+
+- [x] linear
+- [x] piecewise cubic
+- [x] cubic spline (natural or clamped)
+- [x] Chebyshev
+- [x] arbitrary order polynomials (Neville's method)
+- [x] polynomial coefficients (efficient Vandermonde solver)
+- [x] end-point cubic Hermite
+
+##### Two Dimensions, Regular Grid
+
+- [x] linear
+- [x] piecewise cubic
+- [x] Chebyshev
+
+##### N-Dimensions, Scattered Points
+
+- [x] radial basis functions (any choice of function)
+- [x] Shepard
 
 -----
 
@@ -41,31 +65,6 @@ p = LinearInterpolator(x, y, NoBoundaries())
 #compute the derivative dy/dx
 ForwardDiff.derivative(p, 1.0)
 ```
-
------
-
-### Interpolation Methods
-
-##### One Dimension
-
-- [x] linear
-- [x] piecewise cubic
-- [x] cubic spline (natural or clamped)
-- [x] Chebyshev
-- [x] arbitrary order polynomials (Neville's method)
-- [x] polynomial coefficients (efficient Vandermonde solver)
-- [x] end-point cubic Hermite
-
-##### Two Dimensions, Regular Grid
-
-- [x] linear
-- [x] piecewise cubic
-- [x] Chebyshev
-
-##### N-Dimensions, Scattered Points
-
-- [x] radial basis functions (any choice of function)
-- [x] Shepard
 
 -----
 

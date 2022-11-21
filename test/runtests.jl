@@ -48,9 +48,9 @@ end
     @test linear(0.25, [0, 1], [0, 1]) ≈ 0.25
     @test quadratic(0.5, [-1, 0, 1], [1, 0, 1]) ≈ 0.25
     @test cubic(1.5, [0,1,2,3], [1,0,-1,2]) ≈ -0.75
-    c = [4, -1, 2, -5, 1]
-    x = 0:4 |> collect
-    y = [4, 1, -14, -35, -32]
+    c = [4., -1, 2, -5, 1]
+    x = 0:4 .|> Float64
+    y = [4., 1, -14, -35, -32]
     @test neville(2.5, x, y) ≈ -25.0625
     @test all(vandermonde(x, y) .≈ c)
     @test cubichermite(0, -1, 1, 1, -1, 1, -1) ≈ 0.5
