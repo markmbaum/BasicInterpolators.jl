@@ -1,6 +1,9 @@
-# BasicInterpolators.jl ![downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/BasicInterpolators)
+# BasicInterpolators.jl
+![downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/BasicInterpolators)
 
 *Interpolation methods with a simple interface*
+
+*contributions welcome*
 
 | Documentation | Status |
 | :-----------: | :----: |
@@ -41,7 +44,7 @@ julia> ]add BasicInterpolators
 
 ### Basic Usage
 
-A really short demonstration is below, but look at the [**tutorial**](https://markmbaum.github.io/BasicInterpolators.jl/dev/tutorial/) for more complete examples.
+See the [**tutorial**](https://markmbaum.github.io/BasicInterpolators.jl/dev/tutorial/) for more complete examples.
 
 ```julia
 using BasicInterpolators, ForwardDiff
@@ -59,11 +62,11 @@ p(2.5)
 #interpolate at lots of points
 p.(LinRange(-1, 3, 100))
 
-#make an interpolator that doesn't check boundaries (allows extrapolation)
-p = LinearInterpolator(x, y, NoBoundaries())
-
 #compute the derivative dy/dx
 ForwardDiff.derivative(p, 1.0)
+
+#make an interpolator that doesn't check boundaries (allows extrapolation)
+p = LinearInterpolator(x, y, NoBoundaries())
 ```
 
 -----
@@ -79,4 +82,4 @@ Some notable packages with other/advanced methods:
 5. [FastChebInterp.jl](https://github.com/stevengj/FastChebInterp.jl)
 6. [ApproxFun.jl](https://github.com/JuliaApproximation/ApproxFun.jl)
 
-For a more exhaustive list, look [here](https://github.com/JuliaMath/Interpolations.jl#other-interpolation-packages).
+For a longer list, look [here](https://github.com/JuliaMath/Interpolations.jl#other-interpolation-packages).
