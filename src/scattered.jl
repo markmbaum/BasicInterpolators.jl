@@ -83,10 +83,13 @@ end
 
 Construct a radial basis function (RBF) interpolator for an n-dimensional set of points with coordinates `X` and values `y`. `X` must be an p × N array, where p is the number of points and N is the number of dimensions. `y` must be a length p vector. The value of `ϵ` scales the radial basis function of choice, `f`, which is [`invmultiquadratic`](@ref) by default. Any function in the form ``ϕ(r,ϵ)`` can be passed to the `rbf` argument, where \$r\$ is the distance between points and ``ϵ`` is a scaling factor.
 """
-function RBFInterpolator(X::AbstractMatrix,
-                         y::AbstractVector,
-                         ϵ::Real=1,
-                         rbf::F=multiquadratic) where {F}
+function RBFInterpolator(
+        X::AbstractMatrix,
+        y::AbstractVector,
+        ϵ::Real=1,
+        rbf::F=multiquadratic
+    ) where {F}
+
     S = ScatteredPoints(X, y)
     #matrix of basis function evaluations
     A = ones(eltype(y), S.p, S.p)

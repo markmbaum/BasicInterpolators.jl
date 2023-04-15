@@ -37,7 +37,7 @@ P(0.5, 0.5)
 
 ## Grid spacing
 
-Unevenly spaced grids are acceptable for all interpolators except the chebyshev interpolators and the bivariate spline, but you have to supply the coordinates directly instead of constructing with a function. When you do construct with a function, all the interpolators use evenly spaced points except for the chebyshev interpolators.
+Unevenly spaced grids are acceptable for all interpolators except the chebyshev interpolators, but you have to supply the coordinates directly instead of constructing with a function. When you do construct with a function, all the interpolators use evenly spaced points except for the chebyshev interpolators.
 
 ## Boundaries
 

@@ -1,4 +1,4 @@
-export CubicSplineInterpolator, BicubicSplineInterpolator
+export CubicSplineInterpolator
 
 #-------------------------------------------------------------------------------
 # piecewise cubics with continuous derivatives (splines!)
@@ -66,11 +66,7 @@ end
 
 Construct a `CubicSplineInterpolator` for the points defined by coordinates `x` and values `y`. This constructor creates a clamped spline, where the first derivatives at the boundaries are set by `dy₁` and `dyₙ`.
 """
-function CubicSplineInterpolator(x,
-                                 y,
-                                 dy₁::Real,
-                                 dyₙ::Real,
-                                 boundaries::AbstractBoundaries=StrictBoundaries())
+function CubicSplineInterpolator(x, y, dy₁::Real, dyₙ::Real, boundaries::AbstractBoundaries=StrictBoundaries())
     #construct the underlying range, triggering some checks
     T = promote_type(eltype(x), eltype(y))
     r = InterpolatorRange(x, y)
@@ -109,7 +105,7 @@ function CubicSplineInterpolator(x,
     end
     a = a[1:end-1]
     c = c[1:end-1]
-    
+
     CubicSplineInterpolator(r, a, b, c, d, boundaries)
 end
 
@@ -118,11 +114,7 @@ end
 
 Construct a `CubicSplineInterpolator` for the function `f` using `n` evenly spaced function evaluations in the range [`xa`,`xb`]. A natural spline is created.
 """
-function CubicSplineInterpolator(f,
-                                 xa::Real,
-                                 xb::Real,
-                                 n::Int,
-                                 boundaries::AbstractBoundaries=StrictBoundaries())
+function CubicSplineInterpolator(f, xa::Real, xb::Real, n::Int, boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(CubicSplineInterpolator, f, xa, xb, n, boundaries)
 end
 

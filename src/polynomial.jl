@@ -37,7 +37,7 @@ end
     cubic(x, xₚ, yₚ)
 
 Perform cubic polynomial interpolation of the points defined by coordinates `xₚ` and values `yₚ`, at the coordinate `x`, using Neville's algorithm. `xₚ` and `yₚ` must both contain four points.
-""" 
+"""
 function cubic(x, xₚ, yₚ)
     @assert length(xₚ) == length(yₚ) == 4 "Four (4) points/coordinates are required for simple cubic interpolation/"
     #short names
@@ -249,10 +249,7 @@ end
 
 Construct a `BilinearInterpolator` for the function `f` using a grid of `nx` points evenly spaced on the first axis in [`xa`,`xb`] and `ny` points evenly spaced on the second axis in [`ya`,`yb`].
 """
-function BilinearInterpolator(f,
-                              xa, xb, nx::Int,
-                              ya, yb, ny::Int,
-                              boundaries::AbstractBoundaries=StrictBoundaries())
+function BilinearInterpolator(f, xa, xb, nx::Int, ya, yb, ny::Int, boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(BilinearInterpolator, f, xa, xb, nx, ya, yb, ny, boundaries)
 end
 
@@ -308,10 +305,7 @@ end
 
 Construct a `BicubicInterpolator` for the function `f` using a grid of `nx` points evenly spaced on the first axis in [`xa`,`xb`] and `ny` points evenly spaced on the second axis in [`ya`,`yb`].
 """
-function BicubicInterpolator(f,
-                             xa, xb, nx::Int,
-                             ya, yb, ny::Int,
-                             boundaries::AbstractBoundaries=StrictBoundaries())
+function BicubicInterpolator(f, xa, xb, nx::Int, ya, yb, ny::Int, boundaries::AbstractBoundaries=StrictBoundaries())
     linstruct(BicubicInterpolator, f, xa, xb, nx, ya, yb, ny, boundaries)
 end
 

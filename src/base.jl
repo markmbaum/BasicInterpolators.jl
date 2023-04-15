@@ -58,9 +58,13 @@ end
 
 export AbstractBoundaries, NoBoundaries, WeakBoundaries, StrictBoundaries
 
-upperbounderror(x, xb, axis::String) = error("Interpolation location $x outside upper interpolation limit $xb on the $axis axis")
+function upperbounderror(x, xb, axis::String)
+    error("Interpolation location $x outside upper interpolation limit $xb on the $axis axis")
+end
 
-lowerbounderror(x, xa, axis::String) = error("Interpolation location $x outside lower interpolation limit $xa on the $axis axis")
+function lowerbounderror(x, xa, axis::String)
+    error("Interpolation location $x outside lower interpolation limit $xa on the $axis axis")
+end
 
 abstract type AbstractBoundaries end
 
@@ -73,7 +77,7 @@ Performs no boundary checking. Allows interpolators to blindly extrapolate when 
 """
 struct NoBoundaries <: AbstractBoundaries end
 
-#totally empty function
+#totally inert function for NoBoundaries
 function (B::NoBoundaries)(x...) end
 
 #--------------------------------
@@ -212,10 +216,8 @@ function gridcheck(x::AbstractVector, y::AbstractVector, Z::AbstractMatrix, minp
     @assert (issorted(x) & issorted(y)) "grid coordinates must be monotonically increasing without duplicates"
 end
 
-function linstruct(I::Type, f::F,
-                   xa, xb, nx::Int,
-                   ya, yb, ny::Int,
-                   boundaries::AbstractBoundaries) where {F}
+function linstruct(I::Type, f::F, xa, xb, nx::Int, ya, yb, ny::Int, boundaries::AbstractBoundaries) where {F}
+
     @assert (nx > 1) & (ny > 1) "cannot use a length<=1 grid axis"
     xa, xb, ya, yb = promote(xa, xb, ya, yb)
     T = typeof(xa)
@@ -224,5 +226,6 @@ function linstruct(I::Type, f::F,
     X = x .* ones(T, ny)'
     Y = y' .* ones(T, nx)
     Z = f.(X, Y)
+
     I(x, y, Z, boundaries)
 end
